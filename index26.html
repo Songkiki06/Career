@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediSync — 개인 복약 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --ok: #10b981;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --dim: #334155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* LAYOUT */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+  .logo-text { font-size: 18px; font-weight: 900; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #60a5fa, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo-sub { font-size: 10px; color: var(--muted); margin-top: -2px; }
+  .header-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; overflow-x: auto; padding: 0 12px;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 12px 16px; border: none; background: none;
+    color: var(--muted); font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .nav-btn:hover:not(.active) { color: var(--text); }
+
+  /* CONTENT */
+  main { flex: 1; padding: 20px 16px 40px; max-width: 700px; margin: 0 auto; width: 100%; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  /* INPUTS */
+  input[type="text"], input[type="time"], select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 9px; padding: 10px 14px; color: var(--text);
+    font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* BUTTONS */
+  .btn {
+    border: none; border-radius: 9px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-full { width: 100%; justify-content: center; padding: 13px; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 20px; padding: 4px 10px; font-size: 12px;
+  }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .badge-ok { background: #10b98120; border: 1px solid #10b98155; color: #34d399; }
+  .badge-warn { background: #f59e0b20; border: 1px solid #f59e0b55; color: #fcd34d; }
+  .badge-danger { background: #ef444420; border: 1px solid #ef444455; color: #fca5a5; }
+  .badge-info { background: #3b82f620; border: 1px solid #3b82f655; color: #93c5fd; }
+
+  /* INTERACTION ALERT */
+  .alert {
+    border-radius: 11px; padding: 14px 16px; margin-bottom: 10px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .alert-body { font-size: 12px; line-height: 1.6; }
+  .alert-ok { background: #10b98115; border: 1px solid #10b98140; }
+  .alert-ok .alert-title { color: #34d399; }
+  .alert-warn { background: #f59e0b15; border: 1px solid #f59e0b40; }
+  .alert-warn .alert-title { color: #fcd34d; }
+  .alert-danger { background: #ef444415; border: 1px solid #ef444440; }
+  .alert-danger .alert-title { color: #fca5a5; }
+
+  /* DRUG LIST */
+  .drug-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+  }
+  .drug-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .drug-name { font-size: 14px; font-weight: 700; }
+  .drug-generic { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .drug-category { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--accent2); }
+
+  /* SCHEDULE */
+  .schedule-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+  }
+  .schedule-time { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: var(--accent); min-width: 52px; }
+  .schedule-info { flex: 1; }
+  .schedule-name { font-size: 13px; font-weight: 700; }
+  .schedule-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .check-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--border); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.2s; flex-shrink: 0;
+  }
+  .check-circle.done { background: var(--ok); border-color: var(--ok); }
+
+  /* SYMPTOM */
+  .symptom-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+  }
+  .symptom-label { font-size: 13px; }
+  .symptom-scale { display: flex; gap: 5px; }
+  .scale-btn {
+    width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  }
+  .scale-btn.s0.sel { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .scale-btn.s1.sel { background: #84cc16; border-color: #84cc16; color: #fff; }
+  .scale-btn.s2.sel { background: var(--warn); border-color: var(--warn); color: #fff; }
+  .scale-btn.s3.sel { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  /* REPORT */
+  .report-stat { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .report-stat:last-child { border-bottom: none; }
+  .stat-label { font-size: 12px; color: var(--muted); }
+  .stat-value { font-size: 14px; font-weight: 700; }
+
+  .score-ring {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: conic-gradient(var(--accent) 0% 82%, var(--surface2) 82% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .score-ring::before {
+    content: ''; position: absolute; width: 70px; height: 70px;
+    border-radius: 50%; background: var(--surface);
+  }
+  .score-text { position: relative; z-index: 1; text-align: center; }
+  .score-num { font-size: 22px; font-weight: 900; font-family: 'DM Mono', monospace; color: var(--accent); }
+  .score-unit { font-size: 9px; color: var(--muted); }
+
+  /* SEARCH */
+  .search-results { margin-top: 8px; max-height: 220px; overflow-y: auto; border-radius: 9px; border: 1px solid var(--border); }
+  .search-result-item {
+    padding: 11px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: var(--surface2); }
+  .search-result-name { font-size: 13px; font-weight: 700; }
+  .search-result-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* TAG */
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px; font-size: 12px; margin: 3px;
+  }
+  .tag-remove { cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
+  .tag-remove:hover { color: var(--danger); }
+
+  /* DETAIL PANEL */
+  .detail-section { margin-bottom: 14px; }
+  .detail-section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+  .detail-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
+  .detail-bullet { color: var(--accent); font-size: 12px; margin-top: 2px; flex-shrink: 0; }
+  .detail-text { font-size: 13px; line-height: 1.5; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: #00000088;
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 200; padding: 0;
+  }
+  .modal {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px; width: 100%; max-width: 700px;
+    max-height: 85vh; overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--dim); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 17px; font-weight: 900; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .empty-icon { font-size: 42px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; margin-bottom: 6px; }
+  .empty-sub { font-size: 12px; color: var(--dim); }
+
+  /* GRID */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* MINI STAT */
+  .mini-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .mini-stat-value { font-size: 22px; font-weight: 900; font-family: 'DM Mono', monospace; color: var(--accent); }
+  .mini-stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* TIMELINE */
+  .timeline-item { display: flex; gap: 12px; margin-bottom: 14px; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 4px; flex-shrink: 0; }
+  .timeline-line { width: 2px; background: var(--border); margin: 14px 0 0 4px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1e293b; border: 1px solid var(--border); color: var(--text);
+    padding: 12px 20px; border-radius: 100px; font-size: 13px; font-weight: 500;
+    z-index: 999; transition: transform 0.3s ease; white-space: nowrap;
+    box-shadow: 0 8px 30px #00000055;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* SEPARATOR */
+  .sep { height: 1px; background: var(--border); margin: 14px 0; }
+
+  /* LABEL */
+  .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+  /* HISTORY */
+  .history-day { margin-bottom: 20px; }
+  .history-day-header { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
+  .history-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 10px 14px; margin-bottom: 6px; }
+  .history-entry-time { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--accent2); }
+  .history-entry-text { font-size: 12px; margin-top: 3px; }
+
+  @media (max-width: 480px) {
+    main { padding: 14px 12px 30px; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">💊</div>
+      <div>
+        <div class="logo-text">MediSync</div>
+        <div class="logo-sub">개인 복약 관리</div>
+      </div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">🏠 홈</button>
+    <button class="nav-btn" data-tab="drugs" onclick="switchTab('drugs')">💊 내 약</button>
+    <button class="nav-btn" data-tab="interaction" onclick="switchTab('interaction')">⚡ 상호작용</button>
+    <button class="nav-btn" data-tab="schedule" onclick="switchTab('schedule')">⏰ 복약 알림</button>
+    <button class="nav-btn" data-tab="monitor" onclick="switchTab('monitor')">📊 모니터링</button>
+    <button class="nav-btn" data-tab="report" onclick="switchTab('report')">📄 리포트</button>
+  </nav>
+
+  <main id="mainContent"></main>
+</div>
+
+<div id="toast"></div>
+<div id="modalContainer"></div>
+
+<script>
+// ============================================================
+// DATABASE
+// ============================================================
+const DB = {
+  "아스피린": {
+    generic: "Aspirin (아세틸살리실산)", category: "해열진통제", color: "#ef4444",
+    timing: "식후 30분", dose: "100~325mg",
+    interactions: {
+      "와파린": { level: "high", desc: "항응고 효과가 크게 증가하여 출혈 위험이 높아집니다. 반드시 의사와 상의하세요." },
+      "이부프로펜": { level: "medium", desc: "두 약물 모두 위장 자극을 유발할 수 있고, 아스피린의 심혈관 보호 효과가 감소할 수 있습니다." },
+      "나프록센": { level: "medium", desc: "병용 시 위장 출혈 위험이 증가합니다." },
+      "클로피도그렐": { level: "medium", desc: "출혈 위험이 증가합니다. 의사 지시 없이는 병용하지 마세요." }
+    },
+    sideEffects: ["위장 장애 (속쓰림, 구역)", "출혈 위험 증가", "이명 (고용량 시)", "알레르기 반응"],
+    contraindications: ["임신 3기", "소화성 궤양", "출혈 질환", "심한 신장/간 기능 저하"],
+    tips: ["공복 복용 금지 — 반드시 식후에 복용", "위장 보호제와 함께 처방받는 경우가 많음", "수술 예정 시 최소 7일 전 복용 중단"],
+    monitorSymptoms: ["소화불량", "검은색 대변", "비정상적 멍/출혈", "이명"]
+  },
+  "이부프로펜": {
+    generic: "Ibuprofen", category: "소염진통제 (NSAIDs)", color: "#f97316",
+    timing: "식후", dose: "200~400mg (1회)",
+    interactions: {
+      "아스피린": { level: "medium", desc: "위장 출혈 위험 증가 및 아스피린의 심혈관 보호 효과 감소." },
+      "와파린": { level: "high", desc: "항응고 효과를 강화하여 출혈 위험이 크게 증가합니다." },
+      "리튬": { level: "high", desc: "리튬 혈중 농도를 높여 독성 위험이 생깁니다." },
+      "메트포르민": { level: "low", desc: "신장 기능이 약한 경우 메트포르민 배설이 저해될 수 있습니다." }
+    },
+    sideEffects: ["위장 장애", "두통", "어지러움", "신장 기능 영향 (장기 복용 시)", "혈압 상승"],
+    contraindications: ["임신 (특히 3기)", "소화성 궤양", "심부전", "심한 신장/간 질환"],
+    tips: ["반드시 식사와 함께 복용", "충분한 물과 함께 섭취", "3일 이상 발열, 10일 이상 통증 지속 시 의사 상담", "자몽 주스와 병용 주의"],
+    monitorSymptoms: ["소화불량", "두통", "어지러움", "부종"]
+  },
+  "메트포르민": {
+    generic: "Metformin HCl", category: "당뇨병 치료제 (Biguanide)", color: "#3b82f6",
+    timing: "식사와 함께 또는 직후", dose: "500~2000mg/일",
+    interactions: {
+      "이부프로펜": { level: "low", desc: "신장 기능 저하 시 메트포르민 배설이 저해될 수 있습니다." },
+      "알코올": { level: "high", desc: "유산산증(젖산산증) 위험이 높아집니다. 음주를 삼가세요." },
+      "조영제": { level: "high", desc: "CT 등 조영제 검사 전후 48시간은 복용을 중단해야 합니다." }
+    },
+    sideEffects: ["구역, 구토", "설사", "식욕 감소", "금속 맛", "장기 복용 시 비타민 B12 감소"],
+    contraindications: ["심한 신장 기능 저하 (eGFR<30)", "간 기능 저하", "심부전", "탈수 상태"],
+    tips: ["식사 중 또는 직후 복용으로 위장 부작용 최소화", "조영제 검사 예정 시 반드시 의사에게 알릴 것", "정기적인 신장 기능 검사 필요", "비타민 B12 수치 주기적 확인"],
+    monitorSymptoms: ["구역/구토", "심한 복통", "근육통 (유산산증 징후)", "어지러움"]
+  },
+  "리피토르(아토르바스타틴)": {
+    generic: "Atorvastatin Calcium", category: "고지혈증 치료제 (Statin)", color: "#8b5cf6",
+    timing: "취침 전 (아무 때나 가능)", dose: "10~80mg/일",
+    interactions: {
+      "클래리스로마이신": { level: "high", desc: "스타틴 혈중 농도를 크게 높여 근육병증(횡문근융해증) 위험이 증가합니다." },
+      "에리스로마이신": { level: "high", desc: "혈중 농도 상승으로 근육 독성 위험 증가." },
+      "와파린": { level: "medium", desc: "와파린 효과를 강화할 수 있어 출혈 위험이 증가합니다." },
+      "자몽주스": { level: "medium", desc: "자몽은 약물 대사를 방해하여 혈중 농도를 높입니다." }
+    },
+    sideEffects: ["근육통/근육 약화", "간 수치 상승", "소화불량", "두통", "혈당 상승 (드물게)"],
+    contraindications: ["임신/수유", "활동성 간 질환", "원인불명 AST/ALT 지속 상승"],
+    tips: ["자몽/자몽주스 섭취 금지", "근육통 발생 시 즉시 의사 상담", "음주량 최소화", "정기적 간 기능 검사"],
+    monitorSymptoms: ["근육통/근육 약화", "갈색 소변 (횡문근융해증 징후)", "황달", "심한 피로"]
+  },
+  "와파린": {
+    generic: "Warfarin Sodium", category: "항응고제 (Vitamin K 길항제)", color: "#dc2626",
+    timing: "매일 같은 시간", dose: "개인별 용량 조절 필요",
+    interactions: {
+      "아스피린": { level: "high", desc: "출혈 위험이 매우 크게 증가합니다. 반드시 의사 지시 하에 병용해야 합니다." },
+      "이부프로펜": { level: "high", desc: "와파린 항응고 효과를 강화하여 심각한 출혈 위험이 생깁니다." },
+      "리피토르(아토르바스타틴)": { level: "medium", desc: "와파린 효과가 강화될 수 있어 INR 모니터링이 필요합니다." },
+      "비타민K": { level: "high", desc: "비타민K는 와파린의 효과를 직접 상쇄합니다. 녹색 채소 섭취량을 일정하게 유지하세요." }
+    },
+    sideEffects: ["출혈 (멍, 잇몸 출혈, 코피 등)", "혈뇨", "소화기 출혈", "심한 경우 뇌출혈"],
+    contraindications: ["임신", "심한 출혈 질환", "수술 직전/직후", "심한 고혈압"],
+    tips: ["매일 같은 시간에 복용", "녹색 채소(브로콜리, 시금치 등) 섭취량을 급격히 바꾸지 말 것", "정기적인 INR 혈액 검사 필수", "새 약 복용 시 반드시 의사/약사에게 알릴 것"],
+    monitorSymptoms: ["비정상적 출혈/멍", "혈뇨 (붉거나 갈색 소변)", "검은색/혈변", "두통/어지러움 (심각한 출혈 징후)"]
+  },
+  "암로디핀": {
+    generic: "Amlodipine Besylate", category: "혈압강하제 (칼슘채널차단제)", color: "#0891b2",
+    timing: "아무 때나, 매일 같은 시간", dose: "5~10mg/일",
+    interactions: {
+      "자몽주스": { level: "medium", desc: "자몽은 암로디핀 혈중 농도를 높여 혈압이 과도하게 낮아질 수 있습니다." },
+      "심바스타틴": { level: "medium", desc: "심바스타틴 혈중 농도를 높여 근육 독성 위험이 증가합니다." }
+    },
+    sideEffects: ["발목/다리 부종", "안면 홍조", "두통", "어지러움", "심계항진"],
+    contraindications: ["심인성 쇼크", "불안정 협심증 (일부)"],
+    tips: ["자몽/자몽주스 피하기", "갑자기 복용을 중단하지 말 것", "일어날 때 천천히 움직여 기립성 저혈압 예방"],
+    monitorSymptoms: ["심한 어지러움", "다리 부종", "두근거림", "두통"]
+  },
+  "오메프라졸": {
+    generic: "Omeprazole", category: "위산분비억제제 (PPI)", color: "#059669",
+    timing: "식전 30분~1시간", dose: "20~40mg/일",
+    interactions: {
+      "클로피도그렐": { level: "medium", desc: "클로피도그렐의 활성화를 방해하여 심혈관 보호 효과가 감소할 수 있습니다." },
+      "메트포르민": { level: "low", desc: "메트포르민 흡수에 약간의 영향을 줄 수 있습니다." }
+    },
+    sideEffects: ["두통", "설사 또는 변비", "오심", "장기 복용 시 마그네슘 감소", "C.diff 감염 위험 증가"],
+    contraindications: ["특별한 절대 금기 없음 (개인 과민반응 제외)"],
+    tips: ["식전 30~60분 전 복용이 가장 효과적", "장기 복용 시 마그네슘, 비타민 B12 수치 확인"],
+    monitorSymptoms: ["복통 지속", "심한 설사", "어지러움", "근육 경련 (마그네슘 저하 시)"]
+  },
+  "세티리진": {
+    generic: "Cetirizine HCl", category: "항히스타민제 (2세대)", color: "#84cc16",
+    timing: "취침 전 또는 아무 때나", dose: "10mg/일",
+    interactions: {
+      "알코올": { level: "medium", desc: "중추신경 억제 효과가 증가하여 졸음이 심해질 수 있습니다." }
+    },
+    sideEffects: ["졸음 (드물게)", "입 마름", "두통", "어지러움"],
+    contraindications: ["심한 신장 기능 저하 (용량 조절 필요)"],
+    tips: ["졸음이 생기면 취침 전 복용으로 변경", "운전/기계 조작 시 주의"],
+    monitorSymptoms: ["심한 졸음", "두근거림", "소변 곤란"]
+  },
+  "레보티록신": {
+    generic: "Levothyroxine Sodium (T4)", category: "갑상선 호르몬제", color: "#f59e0b",
+    timing: "기상 직후 공복 (물과 함께)", dose: "개인별 조절",
+    interactions: {
+      "칼슘제": { level: "high", desc: "레보티록신 흡수를 크게 방해합니다. 복용 간격을 최소 4시간 이상 두세요." },
+      "철분제": { level: "high", desc: "흡수를 방해합니다. 4시간 이상 간격 필요." },
+      "오메프라졸": { level: "medium", desc: "흡수에 영향을 줄 수 있어 갑상선 수치 모니터링 필요." }
+    },
+    sideEffects: ["과다 복용 시: 심계항진, 체중 감소, 불안, 불면", "부족 시: 피로, 체중 증가, 추위 과민"],
+    contraindications: ["치료되지 않은 부신 기능 부전", "갑상선중독증"],
+    tips: ["기상 직후 공복에 물로만 복용 (가장 중요)", "30~60분 후 아침 식사", "칼슘, 철분, 제산제와는 4시간 이상 간격"],
+    monitorSymptoms: ["두근거림/빠른 맥박", "손 떨림", "불면", "심한 피로/부종"]
+  },
+  "클로피도그렐": {
+    generic: "Clopidogrel Bisulfate", category: "항혈소판제", color: "#e11d48",
+    timing: "아무 때나 (매일 같은 시간)", dose: "75mg/일",
+    interactions: {
+      "아스피린": { level: "medium", desc: "출혈 위험이 증가합니다. 단, 심혈관 질환에서는 의사 지시 하 병용하기도 합니다." },
+      "오메프라졸": { level: "medium", desc: "오메프라졸이 클로피도그렐 활성화를 방해할 수 있습니다." },
+      "이부프로펜": { level: "medium", desc: "출혈 위험 증가." }
+    },
+    sideEffects: ["출혈 (멍, 잇몸 출혈 등)", "소화 장애", "발진 (드물게)"],
+    contraindications: ["활동성 출혈", "심한 간 기능 저하"],
+    tips: ["멈추지 말 것 — 갑작스러운 중단은 혈전 위험", "수술/치과 치료 전 반드시 담당 의사에게 알릴 것"],
+    monitorSymptoms: ["비정상적 출혈/멍", "검은색/혈변", "두통 (뇌출혈 징후)"]
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  myDrugs: [], // [{ id, name, dose, timing, note, addedAt }]
+  schedules: [], // [{ id, drugId, times:[], checked:{} }]
+  symptoms: {}, // { date: { symptomKey: level } }
+  history: [], // [{ date, type, desc }]
+  todayChecked: {}, // { scheduleId_time: bool }
+  currentTab: 'home',
+};
+
+// Load from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('medisync_state');
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem('medisync_state', JSON.stringify(state)); } catch(e) {}
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function now() { return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }); }
+function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
+function uid() { return Math.random().toString(36).slice(2); }
+function addHistory(type, desc) {
+  state.history.unshift({ date: today(), time: now(), type, desc });
+  if (state.history.length > 200) state.history.pop();
+}
+
+// ============================================================
+// INTERACTION ENGINE
+// ============================================================
+function checkInteractions(drugNames) {
+  const results = [];
+  const seen = new Set();
+  drugNames.forEach(d1 => {
+    const info1 = DB[d1];
+    if (!info1) return;
+    drugNames.forEach(d2 => {
+      if (d1 === d2) return;
+      const key = [d1, d2].sort().join('|||');
+      if (seen.has(key)) return;
+      if (info1.interactions && info1.interactions[d2]) {
+        seen.add(key);
+        results.push({ drug1: d1, drug2: d2, ...info1.interactions[d2] });
+      }
+    });
+  });
+  return results.sort((a, b) => { const o = {high:0,medium:1,low:2}; return o[a.level]-o[b.level]; });
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function render() {
+  updateHeaderDate();
+  renderTab(state.currentTab);
+}
+
+function updateHeaderDate() {
+  const el = document.getElementById('headerDate');
+  if (el) el.textContent = new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+}
+
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  const main = document.getElementById('mainContent');
+  if (tab === 'home') main.innerHTML = renderHome();
+  else if (tab === 'drugs') main.innerHTML = renderDrugs();
+  else if (tab === 'interaction') main.innerHTML = renderInteraction();
+  else if (tab === 'schedule') main.innerHTML = renderSchedule();
+  else if (tab === 'monitor') main.innerHTML = renderMonitor();
+  else if (tab === 'report') main.innerHTML = renderReport();
+  bindEvents(tab);
+}
+
+// ===== HOME =====
+function renderHome() {
+  const drugNames = state.myDrugs.map(d => d.name);
+  const interactions = checkInteractions(drugNames);
+  const highRisk = interactions.filter(i => i.level === 'high');
+  const todayTotal = state.schedules.reduce((a,s) => a + (s.times?.length||0), 0);
+  const todayDone = Object.values(state.todayChecked).filter(Boolean).length;
+  const adherence = todayTotal > 0 ? Math.round((todayDone/todayTotal)*100) : 100;
+
+  let alertHtml = '';
+  if (highRisk.length > 0) {
+    alertHtml = `<div class="alert alert-danger">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">병용 금기 ${highRisk.length}건 감지됨</div>
+        <div class="alert-body">${highRisk.map(i=>`<b>${i.drug1}</b> + <b>${i.drug2}</b>`).join(', ')} — 즉시 상호작용 탭을 확인하세요.</div>
+      </div>
+    </div>`;
+  } else if (drugNames.length > 1) {
+    alertHtml = `<div class="alert alert-ok">
+      <div class="alert-icon">✅</div>
+      <div>
+        <div class="alert-title">주요 상호작용 없음</div>
+        <div class="alert-body">현재 복용 중인 ${drugNames.length}가지 약물 간 주요 상호작용이 감지되지 않았습니다.</div>
+      </div>
+    </div>`;
+  }
+
+  // Next schedule
+  const nowH = new Date().getHours(), nowM = new Date().getMinutes();
+  let nextDrug = '', nextTime = '';
+  let minDiff = Infinity;
+  state.schedules.forEach(s => {
+    const drug = state.myDrugs.find(d=>d.id===s.drugId);
+    if (!drug) return;
+    (s.times||[]).forEach(t => {
+      const [h,m] = t.split(':').map(Number);
+      let diff = (h*60+m) - (nowH*60+nowM);
+      if (diff < 0) diff += 1440;
+      if (diff < minDiff) { minDiff = diff; nextDrug = drug.name; nextTime = t; }
+    });
+  });
+
+  return `
+    <div class="card" style="background:linear-gradient(135deg,#1e3a5f,#1e2d45);border-color:#2a4a70;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:2px;">오늘의 복약 순응도</div>
+          <div style="font-size:28px;font-weight:900;font-family:'DM Mono',monospace;color:#60a5fa;">${adherence}%</div>
+        </div>
+        <div class="score-ring"><div class="score-text"><div class="score-num">${adherence}</div><div class="score-unit">%</div></div></div>
+      </div>
+      <div style="background:#ffffff0a;border-radius:8px;padding:12px;display:flex;gap:10px;align-items:center;">
+        <span style="font-size:20px;">⏰</span>
+        <div>
+          ${nextDrug ? `<div style="font-size:12px;color:var(--muted);">다음 복약</div>
+          <div style="font-size:14px;font-weight:700;">${nextDrug} <span style="color:var(--accent);font-family:'DM Mono',monospace;">${nextTime}</span></div>` :
+          `<div style="font-size:13px;color:var(--muted);">오늘 등록된 복약 스케줄이 없습니다</div>`}
+        </div>
+      </div>
+    </div>
+
+    ${alertHtml}
+
+    <div class="grid2">
+      <div class="mini-stat">
+        <div class="mini-stat-value">${state.myDrugs.length}</div>
+        <div class="mini-stat-label">복용 중인 약</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-value" style="color:${interactions.length>0?'var(--warn)':'var(--ok)'};">${interactions.length}</div>
+        <div class="mini-stat-label">상호작용 경고</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">오늘의 복약 현황</div>
+      <div class="card-sub">체크박스를 눌러 복약 완료를 기록하세요</div>
+      ${renderTodaySchedule()}
+    </div>
+
+    <div class="card">
+      <div class="card-title">최근 기록</div>
+      ${state.history.slice(0,5).map(h=>`
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:18px;">${h.type==='drug'?'💊':h.type==='symptom'?'📊':'📋'}</span>
+          <div>
+            <div style="font-size:12px;color:var(--text);">${h.desc}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;">${h.date} ${h.time}</div>
+          </div>
+        </div>
+      `).join('') || '<div style="color:var(--muted);font-size:13px;padding:10px 0;">아직 기록이 없습니다.</div>'}
+    </div>
+  `;
+}
+
+function renderTodaySchedule() {
+  if (state.schedules.length === 0) return `<div style="color:var(--muted);font-size:13px;">등록된 스케줄이 없습니다. <a href="#" onclick="switchTab('schedule');return false;" style="color:var(--accent);">복약 알림 탭</a>에서 추가하세요.</div>`;
+  let html = '';
+  state.schedules.forEach(s => {
+    const drug = state.myDrugs.find(d=>d.id===s.drugId);
+    if (!drug) return;
+    (s.times||[]).forEach(t => {
+      const ck = `${s.id}_${t}`;
+      const done = !!state.todayChecked[ck];
+      html += `<div class="schedule-item">
+        <div class="schedule-time">${t}</div>
+        <div class="schedule-info">
+          <div class="schedule-name">${drug.name}</div>
+          <div class="schedule-note">${drug.dose||''} ${drug.timing||''}</div>
+        </div>
+        <div class="check-circle ${done?'done':''}" onclick="toggleCheck('${ck}','${drug.name}',this)">${done?'✓':''}</div>
+      </div>`;
+    });
+  });
+  return html || '<div style="color:var(--muted);font-size:13px;">오늘 예정된 복약이 없습니다.</div>';
+}
+
+// ===== DRUGS =====
+function renderDrugs() {
+  return `
+    <div class="card">
+      <div class="card-title">약물 추가</div>
+      <div class="card-sub">약 이름을 검색하여 복용 중인 약을 등록하세요</div>
+      <input type="text" id="drugSearch" placeholder="약 이름 검색 (예: 아스피린, 와파린)" oninput="searchDrug(this.value)">
+      <div id="searchResults" class="search-results" style="display:none;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">내가 복용 중인 약 (${state.myDrugs.length}종)</div>
+      ${state.myDrugs.length === 0 ?
+        `<div class="empty"><div class="empty-icon">💊</div><div class="empty-text">등록된 약이 없습니다</div><div class="empty-sub">위에서 약을 검색하여 추가하세요</div></div>` :
+        state.myDrugs.map(drug => {
+          const info = DB[drug.name];
+          return `<div class="drug-item">
+            <div class="drug-dot" style="background:${info?.color||'#64748b'};"></div>
+            <div style="flex:1;">
+              <div class="drug-name">${drug.name}</div>
+              <div class="drug-generic">${info?.generic||''}</div>
+              <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;">
+                ${info?.category?`<span class="drug-category">${info.category}</span>`:''}
+                ${drug.dose?`<span style="font-size:11px;color:var(--muted);">${drug.dose}</span>`:''}
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="showDrugDetail('${drug.name}')">상세</button>
+              <button class="btn btn-sm" style="background:var(--danger)20;border:1px solid var(--danger)44;color:var(--danger);" onclick="removeDrug('${drug.id}')">삭제</button>
+            </div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+}
+
+// ===== INTERACTION =====
+function renderInteraction() {
+  const drugNames = state.myDrugs.map(d => d.name);
+  const interactions = checkInteractions(drugNames);
+  const highCount = interactions.filter(i=>i.level==='high').length;
+  const medCount = interactions.filter(i=>i.level==='medium').length;
+
+  return `
+    <div class="card">
+      <div class="card-title">상호작용 분석</div>
+      <div class="card-sub">현재 복용 중인 ${drugNames.length}종 약물의 상호작용을 분석합니다</div>
+      ${drugNames.length < 2 ?
+        `<div class="alert alert-ok"><div class="alert-icon">ℹ️</div><div><div class="alert-title">약물 2가지 이상 등록 필요</div><div class="alert-body">내 약 탭에서 복용 중인 약을 2가지 이상 등록하면 상호작용을 분석합니다.</div></div></div>` :
+        interactions.length === 0 ?
+          `<div class="alert alert-ok"><div class="alert-icon">✅</div><div><div class="alert-title">상호작용 없음</div><div class="alert-body">현재 등록된 약물들 사이에 주요 상호작용이 감지되지 않았습니다.</div></div></div>` :
+          `<div style="display:flex;gap:10px;margin-bottom:14px;">
+            ${highCount>0?`<span class="badge badge-danger">🚨 병용 금기 ${highCount}건</span>`:''}
+            ${medCount>0?`<span class="badge badge-warn">⚡ 주의 ${medCount}건</span>`:''}
+          </div>
+          ${interactions.map(i => {
+            const cls = i.level==='high'?'alert-danger':i.level==='medium'?'alert-warn':'alert-ok';
+            const label = i.level==='high'?'병용 금기':i.level==='medium'?'주의 필요':'참고';
+            const icon = i.level==='high'?'🚨':i.level==='medium'?'⚡':'ℹ️';
+            return `<div class="alert ${cls}">
+              <div class="alert-icon">${icon}</div>
+              <div>
+                <div class="alert-title">${label}: ${i.drug1} + ${i.drug2}</div>
+                <div class="alert-body">${i.desc}</div>
+              </div>
+            </div>`;
+          }).join('')}`
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-title">약물별 주요 상호작용 목록</div>
+      <div class="card-sub">각 약물이 주의해야 할 상호작용 물질</div>
+      ${state.myDrugs.length === 0 ?
+        `<div style="color:var(--muted);font-size:13px;">등록된 약이 없습니다.</div>` :
+        state.myDrugs.map(drug => {
+          const info = DB[drug.name];
+          if (!info) return '';
+          const ints = Object.entries(info.interactions||{});
+          return `<div style="margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div class="drug-dot" style="background:${info.color};width:8px;height:8px;"></div>
+              <span style="font-size:14px;font-weight:700;">${drug.name}</span>
+            </div>
+            ${ints.length === 0 ? `<div style="font-size:12px;color:var(--muted);">알려진 주요 상호작용 없음</div>` :
+              ints.map(([name, data]) => {
+                const inMyList = state.myDrugs.some(d=>d.name===name);
+                return `<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;background:${data.level==='high'?'#ef444410':data.level==='medium'?'#f59e0b10':'#3b82f610'};border:1px solid ${data.level==='high'?'#ef444430':data.level==='medium'?'#f59e0b30':'#3b82f630'};border-radius:8px;margin-bottom:5px;">
+                  <span style="font-size:11px;flex-shrink:0;">${data.level==='high'?'🚨':data.level==='medium'?'⚡':'ℹ️'}</span>
+                  <div style="flex:1;">
+                    <span style="font-size:12px;font-weight:700;color:${inMyList?'#fca5a5':data.level==='high'?'#fca5a5':data.level==='medium'?'#fcd34d':'#93c5fd'};">${name}</span>
+                    ${inMyList?`<span style="font-size:10px;background:#ef444420;border:1px solid #ef444440;color:#fca5a5;border-radius:4px;padding:1px 5px;margin-left:5px;">현재 복용 중</span>`:''}
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;">${data.desc}</div>
+                  </div>
+                </div>`;
+              }).join('')
+            }
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+}
+
+// ===== SCHEDULE =====
+function renderSchedule() {
+  return `
+    <div class="card">
+      <div class="card-title">복약 스케줄 추가</div>
+      <div class="card-sub">약물을 선택하고 복용 시간을 설정하세요</div>
+      ${state.myDrugs.length === 0 ?
+        `<div class="alert alert-warn"><div class="alert-icon">⚠️</div><div><div class="alert-title">먼저 약을 등록해주세요</div><div class="alert-body"><a href="#" onclick="switchTab('drugs');return false;" style="color:var(--accent);">내 약 탭</a>에서 복용 중인 약을 등록한 후 스케줄을 추가하세요.</div></div></div>` :
+        `<div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label class="label">약물 선택</label>
+            <select id="schedDrug">
+              <option value="">선택하세요</option>
+              ${state.myDrugs.map(d=>`<option value="${d.id}">${d.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="label">복용 시간 (여러 시간 추가 가능)</label>
+            <div style="display:flex;gap:8px;">
+              <input type="time" id="schedTime" style="flex:1;">
+              <button class="btn btn-secondary" onclick="addSchedTime()">+ 추가</button>
+            </div>
+            <div id="schedTimes" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="saveSchedule()">스케줄 저장</button>
+        </div>`
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-title">등록된 스케줄</div>
+      ${state.schedules.length === 0 ?
+        `<div class="empty"><div class="empty-icon">⏰</div><div class="empty-text">등록된 스케줄이 없습니다</div></div>` :
+        state.schedules.map(s => {
+          const drug = state.myDrugs.find(d=>d.id===s.drugId);
+          if (!drug) return '';
+          const info = DB[drug.name];
+          return `<div class="drug-item" style="flex-direction:column;align-items:flex-start;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="drug-dot" style="background:${info?.color||'#64748b'};"></div>
+                <span style="font-weight:700;font-size:14px;">${drug.name}</span>
+              </div>
+              <button class="btn btn-sm" style="background:var(--danger)20;border:1px solid var(--danger)44;color:var(--danger);" onclick="removeSchedule('${s.id}')">삭제</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${(s.times||[]).map(t=>`<span style="background:var(--accent)20;border:1px solid var(--accent)44;color:#93c5fd;border-radius:6px;padding:3px 10px;font-size:12px;font-family:'DM Mono',monospace;">${t}</span>`).join('')}
+            </div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+}
+
+let tempTimes = [];
+
+// ===== MONITOR =====
+const SYMPTOMS = [
+  { key: 'headache', label: '두통', icon: '🤕' },
+  { key: 'nausea', label: '구역/구토', icon: '🤢' },
+  { key: 'dizziness', label: '어지러움', icon: '💫' },
+  { key: 'stomach', label: '복통/소화불량', icon: '🫃' },
+  { key: 'fatigue', label: '피로감', icon: '😴' },
+  { key: 'sleep', label: '수면 장애', icon: '🌙' },
+  { key: 'bleeding', label: '출혈/멍', icon: '🩸' },
+  { key: 'rash', label: '발진/두드러기', icon: '🔴' },
+  { key: 'muscle', label: '근육통/관절통', icon: '💪' },
+  { key: 'heart', label: '두근거림/흉통', icon: '❤️' },
+];
+
+function renderMonitor() {
+  const todaySymptoms = state.symptoms[today()] || {};
+  // Trend: last 7 days
+  const last7 = [];
+  for (let i=6; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dk = d.toISOString().split('T')[0];
+    const s = state.symptoms[dk] || {};
+    const total = Object.values(s).reduce((a,v)=>a+v,0);
+    last7.push({ date: dk, label: `${d.getMonth()+1}/${d.getDate()}`, total });
+  }
+
+  return `
+    <div class="card">
+      <div class="card-title">오늘의 증상 기록</div>
+      <div class="card-sub">오늘 ${today()} · 0=없음, 1=약함, 2=보통, 3=심함</div>
+      ${SYMPTOMS.map(s => {
+        const val = todaySymptoms[s.key] ?? -1;
+        return `<div class="symptom-row">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">${s.icon}</span>
+            <span class="symptom-label">${s.label}</span>
+          </div>
+          <div class="symptom-scale">
+            ${[0,1,2,3].map(v=>`<button class="scale-btn s${v} ${val===v?'sel':''}" onclick="setSymptom('${s.key}',${v},this)">${v===0?'없':v}</button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+      <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="saveSymptoms()">오늘 증상 저장</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">최근 7일 증상 강도</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:6px;">
+        ${last7.map(d => {
+          const h = Math.min(100, d.total * 8);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="width:100%;height:${h}px;background:${d.total>10?'var(--danger)':d.total>5?'var(--warn)':'var(--accent)'};border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s;"></div>
+            <span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">${d.label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;">막대 높이 = 전체 증상 강도 합계</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">약물별 모니터링 포인트</div>
+      <div class="card-sub">복용 중인 약에서 특히 주의할 증상</div>
+      ${state.myDrugs.length === 0 ? `<div style="color:var(--muted);font-size:13px;">등록된 약이 없습니다.</div>` :
+        state.myDrugs.map(drug => {
+          const info = DB[drug.name];
+          if (!info || !info.monitorSymptoms) return '';
+          return `<div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:${info.color};"></div>
+              <span style="font-size:13px;font-weight:700;">${drug.name}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${info.monitorSymptoms.map(s=>`<span class="badge badge-warn">${s}</span>`).join('')}
+            </div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+}
+
+// ===== REPORT =====
+function renderReport() {
+  const allSymptomDays = Object.keys(state.symptoms).length;
+  const drugNames = state.myDrugs.map(d=>d.name);
+  const interactions = checkInteractions(drugNames);
+  const totalChecks = Object.keys(state.todayChecked).length;
+  const doneChecks = Object.values(state.todayChecked).filter(Boolean).length;
+  const adherence = totalChecks > 0 ? Math.round((doneChecks/totalChecks)*100) : 100;
+  const highRisk = interactions.filter(i=>i.level==='high').length;
+  const medRisk = interactions.filter(i=>i.level==='medium').length;
+
+  // Most common symptoms
+  const symptomTotals = {};
+  Object.values(state.symptoms).forEach(day => {
+    Object.entries(day).forEach(([k,v]) => {
+      symptomTotals[k] = (symptomTotals[k]||0) + v;
+    });
+  });
+  const topSymptoms = Object.entries(symptomTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  const aiComment = highRisk > 0 ?
+    `⚠️ 병용 금기 ${highRisk}건이 감지되었습니다. 현재 처방 의사 또는 약사에게 반드시 확인받으시기 바랍니다.` :
+    interactions.length > 0 ?
+    `주의해야 할 상호작용 ${medRisk}건이 있습니다. 전문가 상담을 권장합니다.` :
+    `현재 복용 중인 약물 조합에서 주요 상호작용은 발견되지 않았습니다. 지속적인 복약 모니터링을 유지하세요.`;
+
+  return `
+    <div class="card" style="background:linear-gradient(135deg,#1e2d45,#1a2235);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div class="card-title">복약 리포트</div>
+          <div style="font-size:12px;color:var(--muted);">${today()} 기준 · 의사 제출용</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:900;font-family:'DM Mono',monospace;color:var(--accent);">${adherence}%</div>
+          <div style="font-size:10px;color:var(--muted);">복약 순응도</div>
+        </div>
+      </div>
+      <div class="report-stat"><span class="stat-label">복용 중인 약물</span><span class="stat-value">${state.myDrugs.length}종</span></div>
+      <div class="report-stat"><span class="stat-label">병용 금기</span><span class="stat-value" style="color:${highRisk>0?'var(--danger)':'var(--ok)'};">${highRisk}건</span></div>
+      <div class="report-stat"><span class="stat-label">주의 상호작용</span><span class="stat-value" style="color:${medRisk>0?'var(--warn)':'var(--text)'};">${medRisk}건</span></div>
+      <div class="report-stat"><span class="stat-label">증상 기록일</span><span class="stat-value">${allSymptomDays}일</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">복용 약물 요약</div>
+      ${state.myDrugs.length === 0 ? `<div style="color:var(--muted);font-size:13px;">등록된 약이 없습니다.</div>` :
+        state.myDrugs.map(d => {
+          const info = DB[d.name];
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="width:8px;height:8px;border-radius:50%;background:${info?.color||'#64748b'};flex-shrink:0;"></div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;">${d.name}</div>
+              <div style="font-size:11px;color:var(--muted);">${info?.generic||''} · ${info?.category||''}</div>
+            </div>
+            <div style="font-size:11px;color:var(--accent2);">${d.dose||''}</div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+
+    ${topSymptoms.length > 0 ? `
+    <div class="card">
+      <div class="card-title">주요 증상 (누적)</div>
+      ${topSymptoms.map(([k,v]) => {
+        const s = SYMPTOMS.find(s=>s.key===k);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;">${s?.icon||''} ${s?.label||k}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--warn);">총 강도 ${v}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <div class="card" style="border-color:${highRisk>0?'#ef444440':medRisk>0?'#f59e0b40':'#10b98140'};">
+      <div class="card-title">AI 소견</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text);">${aiComment}</div>
+      <div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;">
+        <div style="font-size:11px;color:var(--muted);">⚠️ 이 리포트는 참고용이며, 의학적 조언을 대체하지 않습니다. 반드시 담당 의사 또는 약사와 상담하세요.</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="printReport()">🖨️ 인쇄 / PDF 저장</button>
+  `;
+}
+
+// ============================================================
+// EVENT HANDLERS
+// ============================================================
+function bindEvents(tab) {
+  if (tab === 'schedule') tempTimes = [];
+}
+
+function toggleCheck(key, drugName, el) {
+  state.todayChecked[key] = !state.todayChecked[key];
+  el.classList.toggle('done', state.todayChecked[key]);
+  el.textContent = state.todayChecked[key] ? '✓' : '';
+  if (state.todayChecked[key]) {
+    addHistory('drug', `${drugName} 복약 완료`);
+    toast(`${drugName} 복약 완료!`);
+  }
+  saveState();
+}
+
+function searchDrug(q) {
+  const container = document.getElementById('searchResults');
+  if (!q.trim()) { container.style.display = 'none'; return; }
+  const results = Object.keys(DB).filter(name =>
+    name.includes(q) || DB[name].generic.toLowerCase().includes(q.toLowerCase()) || DB[name].category.includes(q)
+  );
+  if (results.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  container.innerHTML = results.map(name => {
+    const already = state.myDrugs.some(d=>d.name===name);
+    return `<div class="search-result-item" onclick="${already?'':(`addDrug('${name}')`)}" style="${already?'opacity:0.5;cursor:default;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="search-result-name">${name}</div>
+          <div class="search-result-sub">${DB[name].generic} · ${DB[name].category}</div>
+        </div>
+        ${already?`<span style="font-size:11px;color:var(--ok);">✓ 등록됨</span>`:
+          `<span style="font-size:11px;color:var(--accent);">+ 추가</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addDrug(name) {
+  if (state.myDrugs.some(d=>d.name===name)) { toast('이미 등록된 약입니다'); return; }
+  const info = DB[name];
+  const newDrug = { id: uid(), name, dose: info.dose || '', timing: info.timing || '', addedAt: today() };
+  state.myDrugs.push(newDrug);
+  addHistory('drug', `${name} 등록`);
+  saveState();
+  toast(`${name} 등록 완료!`);
+  document.getElementById('drugSearch').value = '';
+  document.getElementById('searchResults').style.display = 'none';
+  renderTab('drugs');
+
+  // Auto check interactions
+  const drugNames = state.myDrugs.map(d=>d.name);
+  const interactions = checkInteractions(drugNames);
+  const high = interactions.filter(i=>i.drug1===name||i.drug2===name).filter(i=>i.level==='high');
+  if (high.length > 0) {
+    setTimeout(() => {
+      showModal(`⚠️ 병용 금기 감지`,
+        `<div class="alert alert-danger"><div class="alert-icon">🚨</div><div><div class="alert-title">주의!</div><div class="alert-body">${high.map(i=>`<b>${i.drug1}</b> + <b>${i.drug2}</b>: ${i.desc}`).join('<br>')}</div></div></div>`
+      );
+    }, 300);
+  }
+}
+
+function removeDrug(id) {
+  const drug = state.myDrugs.find(d=>d.id===id);
+  if (!drug) return;
+  if (!confirm(`${drug.name}을 삭제하시겠습니까?`)) return;
+  state.myDrugs = state.myDrugs.filter(d=>d.id!==id);
+  state.schedules = state.schedules.filter(s=>s.drugId!==id);
+  addHistory('drug', `${drug.name} 삭제`);
+  saveState();
+  toast(`${drug.name} 삭제됨`);
+  renderTab('drugs');
+}
+
+function showDrugDetail(name) {
+  const info = DB[name];
+  if (!info) return;
+  const content = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:${info.color};"></div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);">${info.generic}</div>
+        <div style="font-size:11px;color:var(--accent2);margin-top:2px;">${info.category} · ${info.timing}</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">복용법</div>
+      <div class="alert alert-ok"><div class="alert-icon">⏰</div><div><div class="alert-body">${info.timing} · ${info.dose}</div></div></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">복약 팁</div>
+      ${info.tips.map(t=>`<div class="detail-item"><span class="detail-bullet">▸</span><span class="detail-text">${t}</span></div>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">주요 부작용</div>
+      ${info.sideEffects.map(t=>`<div class="detail-item"><span class="detail-bullet" style="color:var(--warn);">▸</span><span class="detail-text">${t}</span></div>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">복용 금기</div>
+      ${info.contraindications.map(t=>`<div class="detail-item"><span class="detail-bullet" style="color:var(--danger);">▸</span><span class="detail-text">${t}</span></div>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">주의할 증상 (이 약 복용 중)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${info.monitorSymptoms.map(s=>`<span class="badge badge-warn">${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+  showModal(name, content);
+}
+
+function addSchedTime() {
+  const t = document.getElementById('schedTime').value;
+  if (!t) { toast('시간을 선택해주세요'); return; }
+  if (tempTimes.includes(t)) { toast('이미 추가된 시간입니다'); return; }
+  tempTimes.push(t);
+  renderTempTimes();
+}
+
+function renderTempTimes() {
+  const container = document.getElementById('schedTimes');
+  if (!container) return;
+  container.innerHTML = tempTimes.map((t,i) =>
+    `<span class="tag">${t}<span class="tag-remove" onclick="removeTempTime(${i})">×</span></span>`
+  ).join('');
+}
+
+function removeTempTime(i) {
+  tempTimes.splice(i, 1);
+  renderTempTimes();
+}
+
+function saveSchedule() {
+  const drugId = document.getElementById('schedDrug').value;
+  if (!drugId) { toast('약물을 선택해주세요'); return; }
+  if (tempTimes.length === 0) { toast('시간을 최소 1개 추가해주세요'); return; }
+  const existing = state.schedules.findIndex(s=>s.drugId===drugId);
+  if (existing >= 0) {
+    state.schedules[existing].times = [...new Set([...state.schedules[existing].times, ...tempTimes])].sort();
+  } else {
+    state.schedules.push({ id: uid(), drugId, times: [...tempTimes].sort() });
+  }
+  const drug = state.myDrugs.find(d=>d.id===drugId);
+  addHistory('schedule', `${drug?.name||''} 스케줄 등록 (${tempTimes.join(', ')})`);
+  tempTimes = [];
+  saveState();
+  toast('스케줄 저장 완료!');
+  renderTab('schedule');
+}
+
+function removeSchedule(id) {
+  state.schedules = state.schedules.filter(s=>s.id!==id);
+  saveState();
+  toast('스케줄 삭제됨');
+  renderTab('schedule');
+}
+
+function setSymptom(key, val, el) {
+  if (!state.symptoms[today()]) state.symptoms[today()] = {};
+  state.symptoms[today()][key] = val;
+  // Update UI
+  el.closest('.symptom-scale').querySelectorAll('.scale-btn').forEach((b,i) => {
+    b.classList.toggle('sel', i === val);
+  });
+}
+
+function saveSymptoms() {
+  const count = Object.keys(state.symptoms[today()]||{}).length;
+  addHistory('symptom', `증상 기록 완료 (${count}개 항목)`);
+  saveState();
+  toast('증상 기록 저장됨!');
+}
+
+function printReport() {
+  window.print();
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function showModal(title, content) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal(event)">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">${title}</div>
+        <div style="margin-bottom:16px;">${content}</div>
+        <button class="btn btn-secondary btn-full" onclick="closeModal()">닫기</button>
+      </div>
+    </div>`;
+}
+
+function closeModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('modalContainer').innerHTML = '';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+render();
+updateHeaderDate();
+setInterval(updateHeaderDate, 60000);
+</script>
+</body>
+</html>
