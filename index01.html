@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>디지털 브레인 가드 (Digital Brain Guard)</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 750px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2C3E50; font-size: 24px; }
+        .desc-text { text-align: center; color: #7F8C8D; font-size: 14px; margin-bottom: 20px; }
+        
+        .group-frame { border: 2px groove #2980B9; padding: 15px; margin-bottom: 15px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .group-title { font-weight: bold; color: #2980B9; margin-bottom: 5px; }
+        .group-desc { color: #95A5A6; font-size: 13px; }
+        
+        .btn-frame { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
+        button { padding: 12px 20px; font-size: 14px; font-weight: bold; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        
+        .report-frame { border: 2px solid #2C3E50; padding: 15px; border-radius: 5px; }
+        #report-text { width: 100%; height: 150px; background: #F8F9F9; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; resize: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧠 청소년 뇌 건강을 위한 앱 사용 관리</h1>
+    <p class="desc-text">각 앱 군별 사용 시간을 입력하고 알림 및 뇌 건강 리포트를 확인하세요.</p>
+    
+    <div id="app-groups"></div>
+
+    <div class="btn-frame">
+        <button onclick="checkLimits()" style="background-color: #E67E22;">🔔 시간 업데이트 & 알림 체크</button>
+        <button onclick="generateReport()" style="background-color: #2ECC71;">📊 뇌 건강 종합 리포트 생성</button>
+    </div>
+
+    <div class="report-frame">
+        <strong>📋 종합 뇌 건강 진단 및 개선 방향</strong><br><br>
+        <textarea id="report-text" readonly>원하는 사용 시간을 입력한 후 위의 버튼들을 눌러주세요.</textarea>
+    </div>
+</div>
+
+<script>
+const APP_GROUPS = {
+    "1군: 자극적 SNS 및 숏폼": { limit: 30, desc: "틱톡, 유튜브 쇼츠, 인스타그램 릴스 등" },
+    "2군: 경쟁형·보상형 게임": { limit: 60, desc: "리그 오브 레전드, 모바일 게임 등" },
+    "3군: 미디어 스트리밍": { limit: 90, desc: "넷플릭스, 유튜브 일반 영상 등" },
+    "4군: 소통 및 메신저": { limit: 120, desc: "카카오톡, 디스코드, 페메 등" },
+    "5군: 학습 및 생산성": { limit: 180, desc: "인터넷 강의, 노션, 독서 앱 등" }
+};
+
+const container = document.getElementById('app-groups');
+for (let name in APP_GROUPS) {
+    container.innerHTML += `
+        <div class="group-frame">
+            <div>
+                <div class="group-title">${name} (추천 제한: ${APP_GROUPS[name].limit}분)</div>
+                <div class="group-desc">예시: ${APP_GROUPS[name].desc}</div>
+            </div>
+            <div>
+                <input type="number" id="input-${name}" value="0" style="width:60px; text-align:center; font-weight:bold;"> 분 사용
+            </div>
+        </div>
+    `;
+}
+
+function checkLimits() {
+    let alertMsg = "";
+    for (let name in APP_GROUPS) {
+        let val = parseInt(document.getElementById(`input-${name}`).value);
+        if (val >= APP_GROUPS[name].limit) alertMsg += `🚨 ${name} 추천 시간 초과!!\n`;
+    }
+    alert(alertMsg || "모든 앱의 사용 시간이 안전 범위 내에 있습니다. 뇌가 건강하게 쉬고 있어요! 🧠");
+}
+
+function generateReport() {
+    let total = 0;
+    for (let name in APP_GROUPS) total += parseInt(document.getElementById(`input-${name}`).value);
+    document.getElementById('report-text').value = `▶ 총 스마트폰 사용 시간: ${total}분\n` + "=".repeat(40) + "\n\n" + 
+        (total > 300 ? "❌ [심각] 디지털 과부하 및 만성 피로 상태입니다." : "🟢 [양호] 균형 잡힌 뇌 건강 요정입니다.");
+}
+</script>
+</body>
+</html>
