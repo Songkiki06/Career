@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOS-View: 반도체 트랜지스터 시뮬레이터</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax CDN (LaTeX 수식 렌더링용) -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* 슬라이더 커스텀 스타일링 */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #1d4ed8;
+        }
+        input[type="range"].accent-red::-webkit-slider-thumb {
+            background: #dc2626;
+        }
+        input[type="range"].accent-red::-webkit-slider-thumb:hover {
+            background: #b91c1c;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <!-- 헤더 영역 -->
+        <div class="bg-slate-900 px-6 py-5 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">MOS-View</h1>
+                <p class="text-xs text-slate-400 mt-1">반도체 트랜지스터(MOSFET) 동적 시각화 시뮬레이터</p>
+            </div>
+            <!-- NMOS / PMOS 선택 토글 -->
+            <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                <button id="btnNmos" onclick="setMode(true)" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all bg-blue-600 text-white">
+                    NMOS (전자 이동)
+                </button>
+                <button id="btnPmos" onclick="setMode(false)" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-400 hover:text-white">
+                    PMOS (정공 이동)
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- 상태 판독기 -->
+            <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="min-w-[150px]">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">소자 작동 상태</span>
+                    <span id="statusText" class="text-lg font-bold text-red-500">차단 상태 (Cut-off)</span>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">드레인 전류 (\(I_d\))</span>
+                    <span id="currentText" class="text-lg font-bold text-slate-800">0.00 mA</span>
+                </div>
+                <p id="statusDesc" class="text-sm text-slate-600 col-span-1 md:col-span-1">
+                    게이트 전압(\(V_g\))이 임계값보다 낮아 전류가 흐르지 않습니다.
+                </p>
+            </div>
+
+            <!-- 시뮬레이션 캔버스 콘테이너 -->
+            <div class="flex justify-center bg-slate-950 rounded-xl p-3 shadow-inner">
+                <!-- 비율 유지를 위해 max-width를 주고 스타일로 제어 -->
+                <canvas id="simulationCanvas" class="bg-white rounded-lg shadow-sm w-full max-w-full" style="aspect-ratio: 16/9; max-height: 380px;"></canvas>
+            </div>
+
+            <!-- 컨트롤러 영역 -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 슬라이더들 -->
+                <div class="space-y-5 bg-slate-50 p-5 rounded-xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                            <label class="flex items-center gap-1.5">
+                                <span>게이트 전압 (\(V_g\))</span>
+                            </label>
+                            <span id="vgVal" class="text-blue-600 font-bold bg-blue-50 px-2.5 py-0.5 rounded-full text-xs">0.0 V</span>
+                        </div>
+                        <input type="range" id="sliderVg" min="0" max="5" step="0.1" value="0" oninput="updateVg(this.value)" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>0V</span>
+                            <span class="font-medium text-slate-500">임계 전압 (\(V_{th}\)) = 1.0V</span>
+                            <span>5V</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                            <label class="flex items-center gap-1.5">
+                                <span>드레인-소스 전압 (\(V_{ds}\))</span>
+                            </label>
+                            <span id="vdsVal" class="text-blue-600 font-bold bg-blue-50 px-2.5 py-0.5 rounded-full text-xs">0.0 V</span>
+                        </div>
+                        <input type="range" id="sliderVds" min="0" max="5" step="0.1" value="0" oninput="updateVds(this.value)" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                            <span>0V</span>
+                            <span>5V</span>
+                        </div>
+                    </div>
+
+                    <!-- 전압 초기화 버튼 -->
+                    <button onclick="resetVoltages()" class="w-full py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all shadow-sm">
+                        전압 상태 초기화 (0V)
+                    </button>
+                </div>
+
+                <!-- 원리 설명판 -->
+                <div class="flex flex-col justify-between bg-slate-900 text-slate-300 p-5 rounded-xl">
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">동적 물리 핵심 메커니즘</h3>
+                        <ul class="text-xs space-y-2 text-slate-300">
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <span><strong>임계 전압 형성 (\(V_g \ge 1.0V\)):</strong> 기판 상단에 마이너스 전하들이 밀집해 전도 통로인 반전층(Channel)을 형성합니다.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <span><strong>드레인 전류 수식 (\(I_d\)):</strong> 선형 영역에서는 전압에 비례해 전류가 상승하다가, \(V_{ds} \ge V_g - V_{th}\) 시점에 도달하면 전류 증가가 멈추는 포화 현상이 나타납니다.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <span><strong>실시간 I-V 그래프 특성:</strong> 캔버스 우측 상단에서 현재 인가된 두 전압 하에서의 전류 작동점이 곡선 위를 실시간으로 추적합니다.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="text-[10px] text-slate-500 pt-3 border-t border-slate-800 mt-4">
+                        * K-SDGs 9번 (산업, 혁신, 인프라) 연계: 첨단 반도체 기초 교육을 위한 보편적 소프트웨어 인프라 구현.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 시뮬레이터 제어 변수
+        let vg = 0.0;
+        let vds = 0.0;
+        let isNmos = true;
+        const V_TH = 1.0;
+        const K_FACTOR = 0.8; // 전류 스케일 팩터
+
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 가상 좌표 해상도 설정
+        const LOGICAL_WIDTH = 600;
+        const LOGICAL_HEIGHT = 338;
+
+        // 고해상도 디스플레이 처리 (Retina 대응)
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.resetTransform();
+            ctx.scale(rect.width * dpr / LOGICAL_WIDTH, rect.height * dpr / LOGICAL_HEIGHT);
+            ctx.scale(1 / dpr, 1 / dpr);
+            ctx.scale(dpr, dpr);
+        }
+
+        // 실제 반도체 물리 공식에 기반한 전류 계산 함수 (Id)
+        function calculateDrainCurrent(gVolt, dsVolt) {
+            if (gVolt < V_TH) return 0.0; // 차단 영역
+            const vOverdrive = gVolt - V_TH;
+            if (dsVolt < vOverdrive) {
+                // 선형 영역 공식: Id = K * (V_overdrive * Vds - 0.5 * Vds^2)
+                return K_FACTOR * (vOverdrive * dsVolt - 0.5 * dsVolt * dsVolt);
+            } else {
+                // 포화 영역 공식: Id = 0.5 * K * V_overdrive^2
+                return 0.5 * K_FACTOR * vOverdrive * vOverdrive;
+            }
+        }
+
+        // 캐리어 입자(전하) 관리 시스템
+        let particles = [];
+
+        function updateParticles() {
+            // 입자 목표 개수: Vg 전압 크기에 동적으로 대응
+            const targetCount = vg >= V_TH ? Math.floor((vg - V_TH) * 35) : 0;
+
+            while (particles.length < targetCount) {
+                particles.push({
+                    x: Math.random() * 200 + 200, 
+                    y: Math.random() * 16 + 152,  
+                    speed: Math.random() * 1.2 + 0.6
+                });
+            }
+            if (particles.length > targetCount) {
+                particles.length = targetCount;
+            }
+
+            // 입자 이동 계산 (드레인 전압에 맞춰 가속화)
+            particles.forEach(p => {
+                if (vds > 0) {
+                    p.x += vds * p.speed * 0.9;
+                    if (p.x > 400) {
+                        p.x = 200; 
+                        p.y = Math.random() * 16 + 152;
+                    }
+                }
+
+                // 핀치오프(Pinch-off) 시각화: 드레인 접합부 우측(x > 340) 근처에서 전하 채널 수축 유도
+                if (vg >= V_TH && vds >= (vg - V_TH)) {
+                    if (p.x > 340) {
+                        if (p.y > 155) p.y -= 0.6; 
+                    }
+                } else {
+                    if (p.y < 152 || p.y > 168) {
+                        p.y = Math.random() * 16 + 152;
+                    }
+                }
+            });
+        }
+
+        // 상태값 및 수식 텍스트 UI 업데이트
+        function updateUI() {
+            document.getElementById('vgVal').innerText = vg.toFixed(1) + ' V';
+            document.getElementById('vdsVal').innerText = vds.toFixed(1) + ' V';
+
+            const statusText = document.getElementById('statusText');
+            const statusDesc = document.getElementById('statusDesc');
+            const currentText = document.getElementById('currentText');
+
+            const idVal = calculateDrainCurrent(vg, vds);
+            currentText.innerText = idVal.toFixed(2) + ' mA';
+
+            if (vg < V_TH) {
+                statusText.innerText = '차단 상태 (Cut-off)';
+                statusText.className = 'text-lg font-bold text-red-500';
+                statusDesc.innerHTML = '게이트 전압이 임계값(\\(V_{th}\\)=1.0V)보다 낮아 채널이 생기지 않았습니다. 전류가 전혀 흐르지 않습니다.';
+            } else if (vds < (vg - V_TH)) {
+                statusText.innerText = '선형 영역 (Linear)';
+                statusText.className = 'text-lg font-bold text-emerald-500';
+                statusDesc.innerHTML = '충분한 채널이 형성되었고, 드레인 전압 증가에 비례하여 전류가 선형적으로 매끄럽게 증가합니다.';
+            } else {
+                statusText.innerText = '포화 영역 (Saturation)';
+                statusText.className = 'text-lg font-bold text-blue-600';
+                statusDesc.innerHTML = '드레인단 채널이 조여드는 <b>핀치오프(Pinch-off)</b>가 일어나 전압을 더 높여도 드레인 전류가 포화 상태에 수렴합니다.';
+            }
+
+            // MathJax 수식 업데이트 작동 트리거
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+
+            // 테마 악센트 컬러 스위칭 (NMOS: 파랑, PMOS: 빨강)
+            const sliderVg = document.getElementById('sliderVg');
+            const sliderVds = document.getElementById('sliderVds');
+            const vgVal = document.getElementById('vgVal');
+            const vdsVal = document.getElementById('vdsVal');
+
+            if (isNmos) {
+                sliderVg.className = "w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer";
+                sliderVds.className = "w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer";
+                vgVal.className = "text-blue-600 font-bold bg-blue-50 px-2.5 py-0.5 rounded-full text-xs";
+                vdsVal.className = "text-blue-600 font-bold bg-blue-50 px-2.5 py-0.5 rounded-full text-xs";
+            } else {
+                sliderVg.className = "w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red";
+                sliderVds.className = "w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red";
+                vgVal.className = "text-red-600 font-bold bg-red-50 px-2.5 py-0.5 rounded-full text-xs";
+                vdsVal.className = "text-red-600 font-bold bg-red-50 px-2.5 py-0.5 rounded-full text-xs";
+            }
+        }
+
+        // 실시간 I-V 커브 미니 그래프 렌더링 함수
+        function drawIVCurve(x, y, w, h) {
+            // 그래프 박스 배경
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+
+            // 가이드 그리드 라인
+            ctx.strokeStyle = '#334155';
+            ctx.beginPath();
+            ctx.moveTo(x, y + h/2); ctx.lineTo(x + w, y + h/2);
+            ctx.moveTo(x + w/2, y); ctx.lineTo(x + w/2, y + h);
+            ctx.stroke();
+
+            // 그래프 축 정보 텍스트
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '8px sans-serif';
+            ctx.fillText('Id (mA)', x + 5, y + 10);
+            ctx.fillText('Vds (V)', x + w - 32, y + h - 5);
+
+            // 게이트 전압 최대치에 따른 최대 드레인 전류인 6.4mA를 수용하기 위해 Y축 한계선을 6.5로 설정
+            const MAX_CURRENT_Y = 6.5; 
+
+            // 곡선 그리기 (전류 특성 곡선)
+            if (vg >= V_TH) {
+                ctx.strokeStyle = isNmos ? '#3b82f6' : '#ef4444';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                // Vds를 0부터 5V까지 가상 스캔하며 점을 이어 선을 그림
+                for (let v = 0; v <= 5; v += 0.1) {
+                    const idVal = calculateDrainCurrent(vg, v);
+                    // 그래프 내부 좌표로 정확하게 매핑 (수렴 한계선 안쪽으로 한정)
+                    const plotX = x + (v / 5) * (w - 10) + 5;
+                    const plotY = y + h - (idVal / MAX_CURRENT_Y) * (h - 15) - 5;
+                    
+                    if (v === 0) {
+                        ctx.moveTo(plotX, plotY);
+                    } else {
+                        ctx.lineTo(plotX, plotY);
+                    }
+                }
+                ctx.stroke();
+
+                // 현재 전압 작동 지점 빨간 점으로 시각화 (Pulsing Dot)
+                const currentId = calculateDrainCurrent(vg, vds);
+                const currentPlotX = x + (vds / 5) * (w - 10) + 5;
+                const currentPlotY = y + h - (currentId / MAX_CURRENT_Y) * (h - 15) - 5;
+
+                ctx.fillStyle = '#f43f5e';
+                ctx.beginPath();
+                // 심장 박동처럼 크기가 수축/팽창하는 애니메이션 연출
+                const pulseRadius = 3.5 + Math.sin(Date.now() * 0.01) * 1.2;
+                ctx.arc(currentPlotX, currentPlotY, pulseRadius, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                // 차단 상태에서는 0V 바닥 평탄선 출력
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x + 5, y + h - 5);
+                ctx.lineTo(x + w - 5, y + h - 5);
+                ctx.stroke();
+            }
+        }
+
+        // MOSFET 물리 단면 시각화 및 그래프 통합 렌더링
+        function drawMOSFET() {
+            ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            // 1. 기판 그리기 (Substrate)
+            ctx.fillStyle = isNmos ? '#fef3c7' : '#e0f2fe'; 
+            ctx.fillRect(50, 140, 500, 160);
+            
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(isNmos ? 'P-Substrate (P형 기판)' : 'N-Substrate (N형 기판)', 230, 240);
+
+            // 2. 소스(Source) 및 드레인(Drain) 영역 고농도 도핑부 그리기
+            ctx.fillStyle = isNmos ? '#93c5fd' : '#fde047'; 
+            ctx.fillRect(50, 140, 150, 45); 
+            ctx.fillRect(400, 140, 150, 45); 
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = '10px sans-serif';
+            ctx.fillText(isNmos ? 'Source (N+)' : 'Source (P+)', 95, 168);
+            ctx.fillText(isNmos ? 'Drain (N+)' : 'Drain (P+)', 445, 168);
+
+            // 3. 채널 영역 가시화 (게이트 전압 인가에 따른 반전층 변화)
+            if (vg >= V_TH) {
+                ctx.fillStyle = isNmos ? 'rgba(37, 99, 235, 0.25)' : 'rgba(220, 38, 38, 0.25)';
+                
+                ctx.beginPath();
+                ctx.moveTo(200, 140);
+                if (vds >= (vg - V_TH)) {
+                    ctx.lineTo(400, 140);
+                    ctx.lineTo(400, 143); 
+                    ctx.lineTo(200, 168); 
+                } else {
+                    ctx.fillRect(200, 140, 200, 24);
+                }
+                ctx.fill();
+            }
+
+            // 4. SiO2 산화 절연막 그리기
+            ctx.fillStyle = '#cbd5e1'; 
+            ctx.fillRect(200, 130, 200, 10);
+            ctx.fillStyle = '#475569';
+            ctx.font = '9px sans-serif';
+            ctx.fillText('SiO₂ 산화막 (절연체)', 253, 137);
+
+            // 5. 게이트 전극 (Gate Electrode)
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(200, 100, 200, 30);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('Gate (게이트 전극)', 250, 118);
+
+            // 6. 물리 전하 캐리어 입자 렌더링
+            updateParticles();
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = isNmos ? '#2563eb' : '#dc2626';
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 7px sans-serif';
+                ctx.fillText(isNmos ? '-' : '+', p.x - 2, p.y + 2.5);
+            });
+
+            // 7. 실시간 전류-전압 특성 곡선 미니 그래프 그리기 (우측 상단 빈 공간에 배치)
+            // X: 440, Y: 10, 가로: 110, 세로: 75 크기
+            drawIVCurve(440, 10, 110, 75);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText('실시간 Id-Vds 특성', 445, 95);
+        }
+
+        // 애니메이션 루프 구동
+        function animate() {
+            drawMOSFET();
+            requestAnimationFrame(animate);
+        }
+
+        // 입력 값 업데이트 및 UI 전파
+        function updateVg(value) {
+            vg = parseFloat(value);
+            updateUI();
+        }
+
+        function updateVds(value) {
+            vds = parseFloat(value);
+            updateUI();
+        }
+
+        // 전압 리셋 함수
+        function resetVoltages() {
+            vg = 0.0;
+            vds = 0.0;
+            document.getElementById('sliderVg').value = 0;
+            document.getElementById('sliderVds').value = 0;
+            particles = [];
+            updateUI();
+        }
+
+        // NMOS & PMOS 모드 스위칭
+        function setMode(mode) {
+            isNmos = mode;
+            resetVoltages();
+
+            const btnNmos = document.getElementById('btnNmos');
+            const btnPmos = document.getElementById('btnPmos');
+            if (isNmos) {
+                btnNmos.className = "px-4 py-1.5 rounded-md text-xs font-semibold transition-all bg-blue-600 text-white";
+                btnPmos.className = "px-4 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-400 hover:text-white";
+            } else {
+                btnNmos.className = "px-4 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-400 hover:text-white";
+                btnPmos.className = "px-4 py-1.5 rounded-md text-xs font-semibold transition-all bg-red-600 text-white";
+            }
+        }
+
+        // 앱 기동 전초 작업
+        window.onload = function() {
+            resizeCanvas();
+            updateUI();
+            animate();
+        };
+
+        // 반응형 화면 조절 연동
+        window.onresize = function() {
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
