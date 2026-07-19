@@ -1,0 +1,2028 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가상 화학 실험실 & 화학 데이터 분석기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons for Beautiful UI -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        /* 커스텀 18열 그리드 레이아웃 (표준 주기율표용) */
+        .grid-cols-18 {
+            display: grid;
+            grid-template-columns: repeat(18, minmax(0, 1fr));
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl font-sans mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-flask-vial text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        ChemLAB <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2.5 py-0.5 rounded-full font-semibold">PRO</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">인터랙티브 화학 반응 시뮬레이션 및 분석 플랫폼</p>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchTab('simulation')" id="btn-tab-simulation" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-vials mr-2"></i>실험 시뮬레이션
+                </button>
+                <button onclick="switchTab('periodic')" id="btn-tab-periodic" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-table-cells mr-2"></i>주기율표 & 분자 구조
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+        
+        <!-- ================= TAB 1: SIMULATION ZONE ================= -->
+        <section id="tab-simulation" class="space-y-6">
+            <!-- Simulation Selector Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap gap-2 items-center justify-between shadow-xl">
+                <span class="text-sm font-semibold text-slate-400"><i class="fa-solid fa-circle-play text-indigo-500 mr-2"></i>실험 선택:</span>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                    <button onclick="loadSim('equilibrium')" id="btn-sim-equilibrium" class="sim-selector-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                        🧪 화학 평형 & 속도
+                    </button>
+                    <button onclick="loadSim('titration')" id="btn-sim-titration" class="sim-selector-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                        💧 산·염기 중화 적정
+                    </button>
+                    <button onclick="loadSim('electrolysis')" id="btn-sim-electrolysis" class="sim-selector-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                        ⚡ NaCl 전기분해
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simulation Frame -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Control Panel (Left) -->
+                <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between" id="sim-controls">
+                    <!-- Controls will dynamically load here -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2" id="controls-title">
+                            실험 조작
+                        </h3>
+                        <div id="controls-content" class="space-y-6">
+                            <!-- Dynamic controls -->
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-slate-800" id="sim-status-box">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">실시간 시스템 요약</h4>
+                        <div class="bg-slate-950 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1" id="sim-status">
+                            <!-- Dynamic status -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Visualizer (Right) -->
+                <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+                    <!-- Visualizer Title and Mode -->
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white" id="visualizer-title">실험 스크린</h2>
+                            <p class="text-xs text-slate-400 mt-1" id="visualizer-desc">각 파라미터를 조작해 실시간 미시/거시 반응을 관찰하세요.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> 실시간 분석중
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Canvas Container -->
+                    <div class="relative bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800/80 h-[450px]">
+                        <canvas id="simCanvas" class="w-full h-full block cursor-pointer"></canvas>
+                        
+                        <!-- Mini Molecule Legend/Overlay -->
+                        <div class="absolute bottom-4 left-4 bg-slate-900/95 border border-slate-700/50 rounded-lg p-3 text-xs space-y-1.5 backdrop-blur shadow-lg pointer-events-none" id="molecule-legend">
+                            <!-- Dynamic legends -->
+                        </div>
+                    </div>
+
+                    <!-- Micro/Reaction Equation Section -->
+                    <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-5">
+                        <h3 class="text-sm font-semibold text-indigo-400 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-code"></i> 화학 반응식 & 메커니즘
+                        </h3>
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div class="text-center md:text-left">
+                                <p class="text-lg md:text-xl font-bold font-mono text-white tracking-wide" id="equation-display">
+                                    <!-- Dynamic Equation -->
+                                </p>
+                                <p class="text-xs text-slate-400 mt-1" id="equation-desc">
+                                    <!-- Dynamic Equation Desc -->
+                                </p>
+                            </div>
+                            <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-center min-w-[120px]">
+                                <span class="text-[10px] uppercase font-bold text-slate-500 block">현재 속도/상수</span>
+                                <span class="text-base font-bold text-emerald-400 font-mono" id="equation-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: DATA ZONE (PERIODIC & MOLECULES) ================= -->
+        <section id="tab-periodic" class="hidden space-y-6">
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <!-- Periodic Table Area & Element Detail Card (Left - xl:col-span-8) -->
+                <div class="xl:col-span-8 flex flex-col gap-6">
+                    <!-- Periodic Table Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                        <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-table-cells text-indigo-500"></i> 원자량 및 전기 음성도 주기율표
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-1">원소를 클릭하면 바로 아래 카드에서 상세한 물리적 특성과 전기 음성도 정보를 확인할 수 있습니다.</p>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="px-2 py-0.5 text-[10px] rounded bg-red-500/10 text-red-400 border border-red-500/20">비금속</span>
+                                <span class="px-2 py-0.5 text-[10px] rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">알칼리 금속</span>
+                                <span class="px-2 py-0.5 text-[10px] rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">알칼리 토금속</span>
+                                <span class="px-2 py-0.5 text-[10px] rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">준금속</span>
+                                <span class="px-2 py-0.5 text-[10px] rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">비활성 기체</span>
+                            </div>
+                        </div>
+
+                        <!-- The Periodic Table Grid (18 Columns layout) -->
+                        <div class="overflow-x-auto pb-4">
+                            <div class="min-w-[760px]">
+                                <!-- Header Numbers for Groups 1 to 18 -->
+                                <div class="grid grid-cols-18 gap-1 mb-1 text-center text-[10px] font-bold text-slate-500">
+                                    <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div>
+                                </div>
+                                
+                                <div class="grid-cols-18 gap-1.5" id="periodic-table-grid">
+                                    <!-- Dynamically generated elements will go here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moved: Element Info Panel (Directly under Periodic Table for beautiful cohesion) -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl" id="element-detail-card">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-indigo-500"></i> 원소 상세 분석
+                        </h3>
+                        <div id="element-detail-placeholder" class="text-center py-12 text-slate-500 text-sm">
+                            <i class="fa-solid fa-hand-pointer text-3xl mb-3 block animate-bounce"></i>
+                            주기율표에서 원소를 선택해 주세요.
+                        </div>
+                        <div id="element-detail-content" class="hidden space-y-4">
+                            <!-- Dynamic element details -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bond Analyzer & Polar Molecules Visualizer (Right - xl:col-span-4) -->
+                <div class="xl:col-span-4 flex flex-col gap-6">
+                    <!-- Moved: Bond Electronegativity Difference Analyzer (Optimized layout for Right Column) -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                        <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-arrows-left-right text-indigo-400"></i> 결합의 전자 쏠림 & 극성 분석
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">원소 결합 선택 시 전기음성도 차이에 의한 공유 전자쌍의 편향도를 확인합니다.</p>
+                        
+                        <div class="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                            <div class="grid grid-cols-2 gap-2">
+                                <!-- Left Element Selector -->
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-1">원소 A 선택</label>
+                                    <select id="bond-select-A" onchange="updateBondAnalysis()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500">
+                                        <!-- Loaded via JS -->
+                                    </select>
+                                </div>
+
+                                <!-- Right Element Selector -->
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-1">원소 B 선택</label>
+                                    <select id="bond-select-B" onchange="updateBondAnalysis()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500">
+                                        <!-- Loaded via JS -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Real-time analysis output -->
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 flex justify-between items-center">
+                                <div>
+                                    <div class="text-[10px] text-slate-500 font-bold uppercase">전기음성도 차이 (ΔEN)</div>
+                                    <span class="text-xl font-bold text-indigo-400 font-mono" id="bond-en-diff">0.00</span>
+                                </div>
+                                <span class="text-[10px] font-semibold px-2 py-1 rounded" id="bond-polarity-badge">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Real-time visual arrow representation of the bond (scaled height for sidebar) -->
+                        <div class="mt-4 bg-slate-950 h-28 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
+                            <div class="absolute inset-0 flex items-center justify-between px-6 z-10">
+                                <!-- Element A Visual -->
+                                <div class="flex flex-col items-center">
+                                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white" id="bond-vis-nodeA">A</div>
+                                    <span class="text-[9px] text-slate-400 mt-1 font-mono" id="bond-vis-enA">EN: -</span>
+                                </div>
+
+                                <!-- Animated electron cloud pathway -->
+                                <div class="flex-grow mx-2 relative h-10 flex items-center">
+                                    <!-- Center Arrow for dipole vector -->
+                                    <div class="w-full h-1 bg-slate-800 rounded relative">
+                                        <div class="absolute top-1/2 left-0 h-3.5 w-3.5 bg-indigo-500 rounded-full flex items-center justify-center transform -translate-y-1/2 -translate-x-1/2 shadow shadow-indigo-500" id="bond-electron-dot">
+                                            <span class="text-[7px] text-white font-bold leading-none">e⁻</span>
+                                        </div>
+                                        <div class="absolute top-1/2 left-0 h-3.5 w-3.5 bg-indigo-500 rounded-full flex items-center justify-center transform -translate-y-1/2 -translate-x-1/2 shadow shadow-indigo-500" id="bond-electron-dot-2" style="margin-left: 12px;">
+                                            <span class="text-[7px] text-white font-bold leading-none">e⁻</span>
+                                        </div>
+                                        <!-- Dipole arrow direction indicator -->
+                                        <div class="absolute -top-3.5 left-1/2 transform -translate-x-1/2 text-[9px] text-indigo-400 font-bold whitespace-nowrap" id="dipole-vector-text">
+                                            전자 이동 방향 ➔
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Element B Visual -->
+                                <div class="flex flex-col items-center">
+                                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white" id="bond-vis-nodeB">B</div>
+                                    <span class="text-[9px] text-slate-400 mt-1 font-mono" id="bond-vis-enB">EN: -</span>
+                                </div>
+                            </div>
+                            <!-- Background electric mesh effect -->
+                            <div class="absolute inset-0 opacity-10 bg-gradient-to-r from-blue-500 via-indigo-500 to-red-500 pointer-events-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- Polar Molecules Visualization Panel (Bottom Right) -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-nodes text-indigo-500"></i> 주요 분자의 전기적 전하 분포
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">원소간 전기 음성도 차이에 의한 공유 결합 극성과 쌍극자 모멘트 분포를 모형으로 확인합니다.</p>
+                        
+                        <div class="flex gap-2 mb-4 overflow-x-auto pb-2" id="molecule-buttons-container">
+                            <button onclick="loadMolecule('H2O')" id="btn-mol-H2O" class="mol-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white whitespace-nowrap">H₂O</button>
+                            <button onclick="loadMolecule('CO2')" id="btn-mol-CO2" class="mol-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white whitespace-nowrap">CO₂</button>
+                            <button onclick="loadMolecule('NH3')" id="btn-mol-NH3" class="mol-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white whitespace-nowrap">NH₃</button>
+                            <button onclick="loadMolecule('CH4')" id="btn-mol-CH4" class="mol-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white whitespace-nowrap">CH₄</button>
+                            <button onclick="loadMolecule('HCl')" id="btn-mol-HCl" class="mol-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white whitespace-nowrap">HCl</button>
+                        </div>
+
+                        <!-- Molecule Screen -->
+                        <div class="relative bg-slate-950 rounded-xl h-60 flex items-center justify-center border border-slate-800/80 overflow-hidden">
+                            <canvas id="moleculeCanvas" class="w-full h-full block"></canvas>
+                            <div class="absolute top-2 right-2 flex flex-col gap-1">
+                                <span class="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded text-center">🔴 음전하 (δ⁻)</span>
+                                <span class="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded text-center">🔵 양전하 (δ⁺)</span>
+                            </div>
+                        </div>
+
+                        <!-- Molecule Info Details -->
+                        <div class="mt-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2" id="molecule-info-text">
+                            <!-- Dynamic text details of selected molecule -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 ChemLAB. Developed for Interactive Chemistry Education.</p>
+            <p class="mt-1">화학 양적 관계, 속도론, 전기분해, 극성 시각화 탑재</p>
+        </div>
+    </footer>
+
+    <!-- JS Logic Core -->
+    <script>
+        // --- GLOBAL APP STATE ---
+        let currentTab = 'simulation';
+        let currentSim = 'equilibrium';
+        let currentMolecule = 'H2O';
+        
+        let simCanvas, simCtx;
+        let molCanvas, molCtx;
+        let animationFrameId = null;
+        let molAnimationFrameId = null;
+
+        // Custom periodic table element database (Expanded/Modified with standard layout periods/groups)
+        const elements = [
+            { no: 1, symbol: 'H', name: '수소', group: 1, period: 1, weight: 1.008, electronegativity: 2.20, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 2, symbol: 'He', name: '헬륨', group: 18, period: 1, weight: 4.003, electronegativity: null, type: 'noble', color: 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/30 text-purple-400' },
+            { no: 3, symbol: 'Li', name: '리튬', group: 1, period: 2, weight: 6.941, electronegativity: 0.98, type: 'alkali', color: 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-400' },
+            { no: 4, symbol: 'Be', name: '베릴륨', group: 2, period: 2, weight: 9.012, electronegativity: 1.57, type: 'alkaline-earth', color: 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/30 text-cyan-400' },
+            { no: 5, symbol: 'B', name: '붕소', group: 13, period: 2, weight: 10.81, electronegativity: 2.04, type: 'metalloid', color: 'bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/30 text-yellow-400' },
+            { no: 6, symbol: 'C', name: '탄소', group: 14, period: 2, weight: 12.011, electronegativity: 2.55, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 7, symbol: 'N', name: '질소', group: 15, period: 2, weight: 14.007, electronegativity: 3.04, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 8, symbol: 'O', name: '산소', group: 16, period: 2, weight: 15.999, electronegativity: 3.44, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 9, symbol: 'F', name: '플루오린', group: 17, period: 2, weight: 18.998, electronegativity: 3.98, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 10, symbol: 'Ne', name: '네온', group: 18, period: 2, weight: 20.180, electronegativity: null, type: 'noble', color: 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/30 text-purple-400' },
+            { no: 11, symbol: 'Na', name: '소듐', group: 1, period: 3, weight: 22.990, electronegativity: 0.93, type: 'alkali', color: 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-400' },
+            { no: 12, symbol: 'Mg', name: '마그네슘', group: 2, period: 3, weight: 24.305, electronegativity: 1.31, type: 'alkaline-earth', color: 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/30 text-cyan-400' },
+            { no: 13, symbol: 'Al', name: '알루미늄', group: 13, period: 3, weight: 26.982, electronegativity: 1.61, type: 'metal', color: 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-400' },
+            { no: 14, symbol: 'Si', name: '규소', group: 14, period: 3, weight: 28.086, electronegativity: 1.90, type: 'metalloid', color: 'bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/30 text-yellow-400' },
+            { no: 15, symbol: 'P', name: '인', group: 15, period: 3, weight: 30.974, electronegativity: 2.19, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 16, symbol: 'S', name: '황', group: 16, period: 3, weight: 32.065, electronegativity: 2.58, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 17, symbol: 'Cl', name: '염소', group: 17, period: 3, weight: 35.453, electronegativity: 3.16, type: 'nonmetal', color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' },
+            { no: 18, symbol: 'Ar', name: '아르곤', group: 18, period: 3, weight: 39.948, electronegativity: null, type: 'noble', color: 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/30 text-purple-400' },
+            { no: 19, symbol: 'K', name: '칼륨', group: 1, period: 4, weight: 39.098, electronegativity: 0.82, type: 'alkali', color: 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-400' },
+            { no: 20, symbol: 'Ca', name: '칼슘', group: 2, period: 4, weight: 40.078, electronegativity: 1.00, type: 'alkaline-earth', color: 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/30 text-cyan-400' }
+        ];
+
+        // --- ONLOAD INITIALIZATION ---
+        window.onload = function() {
+            simCanvas = document.getElementById('simCanvas');
+            simCtx = simCanvas.getContext('2d');
+            
+            molCanvas = document.getElementById('moleculeCanvas');
+            molCtx = molCanvas.getContext('2d');
+
+            // 1. 화면 스케일 및 크기 강제 동기화 (화학 입자가 사라지지 않도록 방지)
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+
+            // 2. 주기율표 렌더링 및 결합 분석 옵션 불러오기
+            renderPeriodicTable();
+            populateBondDropdowns();
+
+            // 3. 디폴트 화학 평형 시뮬레이션 시작
+            loadSim('equilibrium'); 
+            selectElement(6); // 탄소 디폴트 선택
+            
+            // 4. 전자기 궤도 애니메이션 가동
+            animateBondElectrons();
+        };
+
+        function resizeCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+            
+            const simParent = simCanvas.parentElement;
+            const simW = simParent.clientWidth;
+            const simH = 450; 
+            
+            simCanvas.width = simW * dpr;
+            simCanvas.height = simH * dpr;
+            simCanvas.style.width = simW + 'px';
+            simCanvas.style.height = simH + 'px';
+            // 누적 스케일링 방지를 위해 setTransform 사용
+            simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const molParent = molCanvas.parentElement;
+            const molW = molParent.clientWidth;
+            const molH = 240; 
+            
+            molCanvas.width = molW * dpr;
+            molCanvas.height = molH * dpr;
+            molCanvas.style.width = molW + 'px';
+            molCanvas.style.height = molH + 'px';
+            molCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            
+            if (currentTab === 'periodic') {
+                drawMoleculeStructure();
+            }
+        }
+
+        // --- TAB NAVIGATION SYSTEM ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.add('text-slate-400', 'hover:text-white');
+            });
+            
+            const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+            activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+            activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+
+            if (tabId === 'simulation') {
+                document.getElementById('tab-simulation').classList.remove('hidden');
+                document.getElementById('tab-periodic').classList.add('hidden');
+                cancelAnimationFrame(molAnimationFrameId);
+                loadSim(currentSim);
+            } else {
+                document.getElementById('tab-simulation').classList.add('hidden');
+                document.getElementById('tab-periodic').classList.remove('hidden');
+                cancelAnimationFrame(animationFrameId);
+                loadMolecule(currentMolecule);
+                setTimeout(() => {
+                    resizeCanvases();
+                    updateBondAnalysis();
+                }, 100); 
+            }
+        }
+
+        // --- SIMULATION MANAGEMENT AND STATES ---
+        let equilibriumState = {
+            temp: 298,      
+            volume: 10,     
+            concA: 5,       
+            concB: 5,       
+            concC: 2,       
+            particles: [],
+            reactionK: 0.5  
+        };
+
+        let titrationState = {
+            acidType: 'HCl', 
+            baseType: 'NaOH',
+            acidVolume: 50,  
+            acidConc: 0.1,   
+            baseConc: 0.1,   
+            addedBaseVolume: 0, 
+            ph: 1.0,
+            indicator: 'phenolphthalein',
+            particles: [],
+            isPouring: false
+        };
+
+        let electrolysisState = {
+            voltage: 5.0,    
+            type: 'melt',    
+            particles: [],
+            anodeProducts: [],
+            cathodeProducts: [],
+            totalTime: 0
+        };
+
+        function loadSim(simType) {
+            currentSim = simType;
+            cancelAnimationFrame(animationFrameId);
+
+            document.querySelectorAll('.sim-selector-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            document.getElementById(`btn-sim-${simType}`).classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+            document.getElementById(`btn-sim-${simType}`).classList.remove('bg-slate-800', 'text-slate-300');
+
+            const controlsTitle = document.getElementById('controls-title');
+            const controlsContent = document.getElementById('controls-content');
+
+            if (simType === 'equilibrium') {
+                controlsTitle.innerHTML = `<i class="fa-solid fa-gauge text-indigo-500"></i> 반응평형 및 속도 조작`;
+                controlsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">계의 온도 (T)</span>
+                                <span class="text-indigo-400 font-mono" id="val-temp">298 K</span>
+                            </div>
+                            <input type="range" min="200" max="600" value="298" id="slider-temp" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            <span class="text-[10px] text-slate-500 block mt-0.5">온도가 높을수록 분자의 속도가 빠르고 유효 충돌 횟수가 증가합니다.</span>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">용기의 부피 (V)</span>
+                                <span class="text-indigo-400 font-mono" id="val-volume">10.0 L</span>
+                            </div>
+                            <input type="range" min="5" max="15" step="0.5" value="10" id="slider-volume" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            <span class="text-[10px] text-slate-500 block mt-0.5">부피가 작아질수록 분자의 충돌 빈도(압력)가 급격히 상승합니다.</span>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">반응물 농도 (A)</span>
+                                <span class="text-indigo-400 font-mono" id="val-concA">5.0 M</span>
+                            </div>
+                            <input type="range" min="1" max="10" step="0.5" value="5" id="slider-concA" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">반응물 농도 (B)</span>
+                                <span class="text-indigo-400 font-mono" id="val-concB">5.0 M</span>
+                            </div>
+                            <input type="range" min="1" max="10" step="0.5" value="5" id="slider-concB" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('slider-temp').addEventListener('input', (e) => {
+                    equilibriumState.temp = parseFloat(e.target.value);
+                    document.getElementById('val-temp').innerText = `${e.target.value} K`;
+                    equilibriumState.reactionK = 0.1 * (equilibriumState.temp / 150);
+                });
+                document.getElementById('slider-volume').addEventListener('input', (e) => {
+                    equilibriumState.volume = parseFloat(e.target.value);
+                    document.getElementById('val-volume').innerText = `${parseFloat(e.target.value).toFixed(1)} L`;
+                });
+                document.getElementById('slider-concA').addEventListener('input', (e) => {
+                    equilibriumState.concA = parseFloat(e.target.value);
+                    document.getElementById('val-concA').innerText = `${parseFloat(e.target.value).toFixed(1)} M`;
+                    adjustEquilibriumParticles();
+                });
+                document.getElementById('slider-concB').addEventListener('input', (e) => {
+                    equilibriumState.concB = parseFloat(e.target.value);
+                    document.getElementById('val-concB').innerText = `${parseFloat(e.target.value).toFixed(1)} M`;
+                    adjustEquilibriumParticles();
+                });
+
+                initEquilibriumSimulation();
+
+            } else if (simType === 'titration') {
+                controlsTitle.innerHTML = `<i class="fa-solid fa-droplet text-pink-500"></i> 중화 적정 조작`;
+                controlsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">실험 대상 산 물질 선택</label>
+                            <select id="select-acid" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="HCl">염산 (HCl, 강산)</option>
+                                <option value="CH3COOH">아세트산 (CH₃COOH, 약산)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">뷰렛 염기 투입 (NaOH)</span>
+                                <span class="text-pink-400 font-mono" id="val-baseAdded">0.0 mL</span>
+                            </div>
+                            <input type="range" min="0" max="100" step="0.5" value="0" id="slider-baseAdded" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500">
+                            <span class="text-[10px] text-slate-500 block mt-0.5">슬라이더를 우측으로 이동시켜 NaOH(수산화나트륨) 수용액을 추가합니다.</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button onclick="resetTitration()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-3 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i> 실험 초기화
+                            </button>
+                            <button onclick="autoTitrate()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-forward mr-1"></i> 20mL 급속적정
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('select-acid').addEventListener('change', (e) => {
+                    titrationState.acidType = e.target.value;
+                    resetTitration();
+                });
+
+                document.getElementById('slider-baseAdded').addEventListener('input', (e) => {
+                    titrationState.addedBaseVolume = parseFloat(e.target.value);
+                    document.getElementById('val-baseAdded').innerText = `${parseFloat(e.target.value).toFixed(1)} mL`;
+                    calculateTitrationPH();
+                });
+
+                initTitrationSimulation();
+
+            } else if (simType === 'electrolysis') {
+                controlsTitle.innerHTML = `<i class="fa-solid fa-bolt text-yellow-500"></i> NaCl 전기분해 제어`;
+                controlsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">실험 환경 종류</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setElectrolysisType('melt')" id="btn-elec-melt" class="bg-indigo-600 text-white py-1.5 rounded-lg text-xs font-semibold border border-indigo-500 transition">염화나트륨 용융액</button>
+                                <button onclick="setElectrolysisType('aqueous')" id="btn-elec-aqueous" class="bg-slate-800 text-slate-400 py-1.5 rounded-lg text-xs font-semibold border border-transparent hover:text-white transition">염화나트륨 수용액</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-400">가해준 전압 (DC)</span>
+                                <span class="text-yellow-400 font-mono" id="val-voltage">5.0 V</span>
+                            </div>
+                            <input type="range" min="0" max="12" step="0.2" value="5" id="slider-voltage" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-yellow-500">
+                            <span class="text-[10px] text-slate-500 block mt-0.5">전압이 높을수록 전기분해 속도(전자 이동)가 빨라집니다.</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                            <div class="flex justify-between"><span class="font-semibold text-slate-300">(-)극 반응:</span> <span id="eq-minus-reaction">Na⁺ + e⁻ → Na</span></div>
+                            <div class="flex justify-between"><span class="font-semibold text-slate-300">(+)극 반응:</span> <span id="eq-plus-reaction">2Cl⁻ → Cl₂ + 2e⁻</span></div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('slider-voltage').addEventListener('input', (e) => {
+                    electrolysisState.voltage = parseFloat(e.target.value);
+                    document.getElementById('val-voltage').innerText = `${parseFloat(e.target.value).toFixed(1)} V`;
+                });
+
+                initElectrolysisSimulation();
+            }
+        }
+
+        // --- SIMULATION 1: EQUILIBRIUM & REACTION KINETICS ---
+        function initEquilibriumSimulation() {
+            document.getElementById('visualizer-title').innerText = "화학 반응 속도 & 르샤틀리에 평형 이동";
+            document.getElementById('visualizer-desc').innerText = "기체의 농도, 온도, 가둠 부피를 변화시키면서 입자 충돌과 평형 이동 현상을 관찰하세요.";
+            document.getElementById('equation-display').innerHTML = `A(g) + B(g) <span class="text-indigo-400 font-bold">⇄</span> C(g) <span class="text-red-400 font-normal">+ 열(Endo)</span>`;
+            document.getElementById('equation-desc').innerText = "온도가 올라가면 흡열 반응이 촉진되어 생성물 C가 많아지는 방향으로 평형이 이동합니다.";
+            
+            // Set legends
+            document.getElementById('molecule-legend').innerHTML = `
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-400 inline-block"></span><span>기체 분자 A (Reactant)</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span><span>기체 분자 B (Reactant)</span></div>
+                <div class="flex items-center gap-2"><span class="w-3.5 h-3 rounded-lg bg-indigo-500 inline-block" style="width: 16px;"></span><span>생성물 분자 C (Product)</span></div>
+            `;
+
+            adjustEquilibriumParticles();
+            loopEquilibrium();
+        }
+
+        function adjustEquilibriumParticles() {
+            equilibriumState.particles = [];
+            // 확실하게 동기화된 가로 세로 길이 로드
+            const w = simCanvas.width / (window.devicePixelRatio || 1);
+            const h = simCanvas.height / (window.devicePixelRatio || 1);
+
+            if (w <= 0 || h <= 0) return;
+
+            // Generate particles based on concentration settings
+            for (let i = 0; i < equilibriumState.concA * 4; i++) {
+                equilibriumState.particles.push({
+                    x: Math.random() * (w - 60) + 30,
+                    y: Math.random() * (h - 150) + 30,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    type: 'A',
+                    radius: 7,
+                    color: '#38bdf8'
+                });
+            }
+            for (let i = 0; i < equilibriumState.concB * 4; i++) {
+                equilibriumState.particles.push({
+                    x: Math.random() * (w - 60) + 30,
+                    y: Math.random() * (h - 150) + 30,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    type: 'B',
+                    radius: 7,
+                    color: '#facc15'
+                });
+            }
+            
+            // Initial equilibrium Products based on K
+            const currentC = Math.floor(equilibriumState.concA * equilibriumState.concB * equilibriumState.reactionK * 0.5);
+            for (let i = 0; i < currentC; i++) {
+                equilibriumState.particles.push({
+                    x: Math.random() * (w - 60) + 30,
+                    y: Math.random() * (h - 150) + 30,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: (Math.random() - 0.5) * 3,
+                    type: 'C',
+                    radius: 12,
+                    color: '#6366f1'
+                });
+            }
+        }
+
+        function loopEquilibrium() {
+            const dpr = window.devicePixelRatio || 1;
+            const w = simCanvas.width / dpr;
+            const h = simCanvas.height / dpr;
+
+            simCtx.clearRect(0, 0, w, h);
+
+            // Container volume boundary box
+            const rightBound = w * (equilibriumState.volume / 15);
+            const bottomBound = h - 50;
+
+            // Draw container border
+            simCtx.strokeStyle = '#475569';
+            simCtx.lineWidth = 4;
+            simCtx.strokeRect(10, 10, rightBound - 20, bottomBound - 20);
+            simCtx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+            simCtx.fillRect(10, 10, rightBound - 20, bottomBound - 20);
+
+            // Speed factor based on Temp
+            const speedMultiplier = Math.sqrt(equilibriumState.temp / 298);
+
+            // Particle Physics & Rendering
+            let particles = equilibriumState.particles;
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                
+                // Motion update
+                p.x += p.vx * speedMultiplier;
+                p.y += p.vy * speedMultiplier;
+
+                // Wall Collision (With security margins)
+                if (p.x - p.radius < 12) { p.x = 12 + p.radius; p.vx *= -1; }
+                if (p.x + p.radius > rightBound - 12) { p.x = rightBound - 12 - p.radius; p.vx *= -1; }
+                if (p.y - p.radius < 12) { p.y = 12 + p.radius; p.vy *= -1; }
+                if (p.y + p.radius > bottomBound - 12) { p.y = bottomBound - 12 - p.radius; p.vy *= -1; }
+
+                // Check collisions with other particles to perform REACTION
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p2.x - p.x;
+                    let dy = p2.y - p.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < p.radius + p2.radius) {
+                        // Elastic bounce first
+                        let tempVx = p.vx;
+                        let tempVy = p.vy;
+                        p.vx = p2.vx;
+                        p.vy = p2.vy;
+                        p2.vx = tempVx;
+                        p2.vy = tempVy;
+
+                        // Synthesizing Reaction (A + B -> C)
+                        if (((p.type === 'A' && p2.type === 'B') || (p.type === 'B' && p2.type === 'A')) && Math.random() < 0.2 * speedMultiplier) {
+                            p.type = 'C';
+                            p.radius = 12;
+                            p.color = '#6366f1';
+                            // Remove B particle
+                            particles.splice(j, 1);
+                            j--;
+                        }
+                    }
+                }
+
+                // Random Decomposition Reaction (C -> A + B) based on Temperature / volume / pressure
+                if (p.type === 'C' && Math.random() < (0.005 / speedMultiplier)) {
+                    p.type = 'A';
+                    p.radius = 7;
+                    p.color = '#38bdf8';
+                    // Spawn new B inside bounds safely
+                    particles.push({
+                        x: Math.max(15, Math.min(rightBound - 25, p.x + 15)),
+                        y: Math.max(15, Math.min(bottomBound - 25, p.y + 15)),
+                        vx: -p.vx,
+                        vy: -p.vy,
+                        type: 'B',
+                        radius: 7,
+                        color: '#facc15'
+                    });
+                }
+
+                // Draw Particle
+                simCtx.beginPath();
+                simCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                simCtx.fillStyle = p.color;
+                simCtx.shadowBlur = 6;
+                simCtx.shadowColor = p.color;
+                simCtx.fill();
+                simCtx.shadowBlur = 0; // reset shadow for next draws
+            }
+
+            // Calculations
+            let countA = particles.filter(p => p.type === 'A').length;
+            let countB = particles.filter(p => p.type === 'B').length;
+            let countC = particles.filter(p => p.type === 'C').length;
+
+            // Display current dynamic values
+            document.getElementById('equation-value').innerText = `K = ${(countC / (Math.max(1, countA) * Math.max(1, countB) * 0.1)).toFixed(2)}`;
+            document.getElementById('sim-status').innerHTML = `
+                <div>• 입자 수 A: <span class="text-sky-400 font-bold">${countA}</span></div>
+                <div>• 입자 수 B: <span class="text-yellow-400 font-bold">${countB}</span></div>
+                <div>• 평형 생성물 C: <span class="text-indigo-400 font-bold">${countC}</span></div>
+                <div>• 압력 상수(P): <span class="text-orange-400 font-bold">${((countA + countB + countC) / equilibriumState.volume * (equilibriumState.temp/100)).toFixed(2)} atm</span></div>
+            `;
+
+            animationFrameId = requestAnimationFrame(loopEquilibrium);
+        }
+
+        // --- SIMULATION 2: ACID-BASE NEUTRALIZATION ---
+        function initTitrationSimulation() {
+            document.getElementById('visualizer-title').innerText = "산·염기 적정 및 실시간 이온 변화 시뮬레이터";
+            document.getElementById('visualizer-desc').innerText = "산 수용액에 염기(NaOH)를 한 방울씩 주입해 급격한 pH 변화와 종말점의 지시약 색상을 확인하세요.";
+            document.getElementById('equation-display').innerHTML = `H⁺ + Cl⁻ + Na⁺ + OH⁻ <span class="text-indigo-400 font-bold">→</span> H₂O + Na⁺ + Cl⁻`;
+            document.getElementById('equation-desc').innerText = "산의 수소 이온과 염기의 수산화 이온이 만나 물(H₂O)을 형성하며 중화 반응이 진행됩니다.";
+            
+            // Set legends
+            document.getElementById('molecule-legend').innerHTML = `
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span><span>수소 이온 (H⁺ / H₃O⁺)</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span><span>수산화 이온 (OH⁻)</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span><span>구경꾼 이온 (Na⁺, Cl⁻)</span></div>
+                <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full border border-blue-400/50 bg-slate-900 inline-block"></span><span>물 분자 (H₂O)</span></div>
+            `;
+
+            resetTitration();
+            loopTitration();
+        }
+
+        function resetTitration() {
+            titrationState.addedBaseVolume = 0;
+            titrationState.ph = titrationState.acidType === 'HCl' ? 1.0 : 2.87; 
+            
+            const slider = document.getElementById('slider-baseAdded');
+            if (slider) {
+                slider.value = 0;
+                document.getElementById('val-baseAdded').innerText = "0.0 mL";
+            }
+            
+            titrationState.particles = [];
+            const isStrong = titrationState.acidType === 'HCl';
+            
+            const numAcids = 30;
+            for(let i=0; i < numAcids; i++) {
+                if (isStrong) {
+                    titrationState.particles.push({ type: 'H', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2 });
+                    titrationState.particles.push({ type: 'Cl', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2 });
+                } else {
+                    if (i < 3) {
+                        titrationState.particles.push({ type: 'H', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2 });
+                        titrationState.particles.push({ type: 'Ac', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2 });
+                    } else {
+                        titrationState.particles.push({ type: 'HAc', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2 });
+                    }
+                }
+            }
+        }
+
+        function autoTitrate() {
+            let current = parseFloat(document.getElementById('slider-baseAdded').value);
+            let target = Math.min(100, current + 20);
+            
+            let interval = setInterval(() => {
+                if(current < target) {
+                    current += 1;
+                    document.getElementById('slider-baseAdded').value = current;
+                    document.getElementById('val-baseAdded').innerText = `${current.toFixed(1)} mL`;
+                    titrationState.addedBaseVolume = current;
+                    calculateTitrationPH();
+                } else {
+                    clearInterval(interval);
+                }
+            }, 30);
+        }
+
+        function calculateTitrationPH() {
+            const v = titrationState.addedBaseVolume;
+            const isStrong = titrationState.acidType === 'HCl';
+            
+            if (isStrong) {
+                const acidMoles = 0.05 * 0.1;
+                const baseMoles = (v / 1000) * 0.1;
+                
+                if (acidMoles > baseMoles) {
+                    const remainingH = acidMoles - baseMoles;
+                    const totalVolume = 0.05 + (v / 1000);
+                    const concH = remainingH / totalVolume;
+                    titrationState.ph = -Math.log10(concH);
+                } else if (acidMoles === baseMoles || Math.abs(acidMoles - baseMoles) < 0.000001) {
+                    titrationState.ph = 7.0;
+                } else {
+                    const excessOH = baseMoles - acidMoles;
+                    const totalVolume = 0.05 + (v / 1000);
+                    const concOH = excessOH / totalVolume;
+                    titrationState.ph = 14 + Math.log10(concOH);
+                }
+            } else {
+                const c_a = 0.1;
+                const v_a = 50;
+                const c_b = 0.1;
+                const n_a = (v_a * c_a) / 1000;
+                const n_b = (v * c_b) / 1000;
+
+                if (v === 0) {
+                    titrationState.ph = 2.87;
+                } else if (n_b < n_a) {
+                    const Ka = 1.8e-5;
+                    const pH_buffer = -Math.log10(Ka) + Math.log10(n_b / (n_a - n_b));
+                    titrationState.ph = pH_buffer;
+                } else if (Math.abs(n_b - n_a) < 0.000001) {
+                    const totalVol = (v_a + v) / 1000;
+                    const c_salt = n_a / totalVol;
+                    const Kb = 1e-14 / 1.8e-5;
+                    const concOH = Math.sqrt(Kb * c_salt);
+                    titrationState.ph = 14 + Math.log10(concOH);
+                } else {
+                    const excessOH = n_b - n_a;
+                    const totalVol = (v_a + v) / 1000;
+                    const concOH = excessOH / totalVol;
+                    titrationState.ph = 14 + Math.log10(concOH);
+                }
+            }
+
+            syncTitrationIons();
+        }
+
+        function syncTitrationIons() {
+            const v = titrationState.addedBaseVolume;
+            const isStrong = titrationState.acidType === 'HCl';
+            titrationState.particles = [];
+            
+            const initialAmount = 25;
+            const reactPercentage = Math.min(1.0, v / 50); 
+
+            const numNa = Math.floor(initialAmount * reactPercentage * 1.5);
+            for(let i=0; i<numNa; i++) {
+                titrationState.particles.push({ type: 'Na', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+            }
+
+            if (isStrong) {
+                const numCl = initialAmount;
+                for(let i=0; i<numCl; i++) {
+                    titrationState.particles.push({ type: 'Cl', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                }
+
+                if (v < 50) {
+                    const numH = Math.floor(initialAmount * (1 - reactPercentage));
+                    for(let i=0; i<numH; i++) {
+                        titrationState.particles.push({ type: 'H', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                    }
+                    const numWater = Math.floor(initialAmount * reactPercentage);
+                    for(let i=0; i<numWater; i++) {
+                        titrationState.particles.push({ type: 'H2O', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+                    }
+                } else {
+                    const excessPercentage = (v - 50) / 50;
+                    const numOH = Math.floor(initialAmount * excessPercentage * 0.8);
+                    for(let i=0; i<numOH; i++) {
+                        titrationState.particles.push({ type: 'OH', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                    }
+                    for(let i=0; i<initialAmount; i++) {
+                        titrationState.particles.push({ type: 'H2O', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+                    }
+                }
+            } else {
+                const totalAc = initialAmount;
+                const dissociatedPercentage = v < 50 ? (reactPercentage + 0.05) : 1.0;
+                
+                const numDissociatedAc = Math.floor(totalAc * dissociatedPercentage);
+                const numHAc = totalAc - numDissociatedAc;
+
+                for(let i=0; i<numDissociatedAc; i++) {
+                    titrationState.particles.push({ type: 'Ac', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                }
+                for(let i=0; i<numHAc; i++) {
+                    titrationState.particles.push({ type: 'HAc', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.2, vy: (Math.random()-0.5)*1.2 });
+                }
+
+                if (v < 50) {
+                    const numH = Math.max(1, Math.floor(4 * (1 - reactPercentage)));
+                    for(let i=0; i<numH; i++) {
+                        titrationState.particles.push({ type: 'H', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                    }
+                } else {
+                    const excessPercentage = (v - 50) / 50;
+                    const numOH = Math.floor(initialAmount * excessPercentage * 0.8);
+                    for(let i=0; i<numOH; i++) {
+                        titrationState.particles.push({ type: 'OH', x: 100 + Math.random()*150, y: 250 + Math.random()*100, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5 });
+                    }
+                }
+            }
+        }
+
+        function loopTitration() {
+            const dpr = window.devicePixelRatio || 1;
+            const w = simCanvas.width / dpr;
+            const h = simCanvas.height / dpr;
+            simCtx.clearRect(0, 0, w, h);
+
+            // 1. Draw Buret (뷰렛) at Top-Right
+            simCtx.fillStyle = '#1e293b';
+            simCtx.fillRect(w - 110, 20, 20, 160);
+            simCtx.strokeStyle = '#64748b';
+            simCtx.strokeRect(w - 110, 20, 20, 160);
+
+            // Buret Liquid
+            const basePct = Math.max(0, 1 - (titrationState.addedBaseVolume / 100));
+            simCtx.fillStyle = '#06b6d4'; 
+            simCtx.fillRect(w - 109, 20 + (160 * (1 - basePct)), 18, 160 * basePct - 1);
+
+            // Buret tip & tap
+            simCtx.strokeStyle = '#64748b';
+            simCtx.beginPath();
+            simCtx.moveTo(w - 100, 180);
+            simCtx.lineTo(w - 100, 210);
+            simCtx.stroke();
+
+            // Valve/Tap
+            simCtx.fillStyle = titrationState.addedBaseVolume > 0 ? '#10b981' : '#ef4444';
+            simCtx.beginPath();
+            simCtx.arc(w - 100, 195, 6, 0, Math.PI * 2);
+            simCtx.fill();
+
+            // 2. Pouring Liquid line animation (if base is actively added)
+            if (titrationState.addedBaseVolume > 0) {
+                simCtx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
+                simCtx.lineWidth = 3;
+                simCtx.beginPath();
+                simCtx.moveTo(w - 100, 210);
+                simCtx.lineTo(220, 250);
+                simCtx.stroke();
+                simCtx.lineWidth = 1; 
+            }
+
+            // 3. Draw Beaker (비커) at Center-Left
+            const beakerX = 80;
+            const beakerY = 220;
+            const beakerW = 280;
+            const beakerH = 150;
+
+            let liquidColor = 'rgba(148, 163, 184, 0.15)'; 
+            if (titrationState.ph > 8.2) {
+                const intensity = Math.min(0.8, 0.2 + (titrationState.ph - 8.2) * 0.15);
+                liquidColor = `rgba(236, 72, 153, ${intensity})`; 
+            }
+
+            const liquidLevel = beakerH * (0.4 + (titrationState.addedBaseVolume / 100) * 0.35);
+
+            simCtx.fillStyle = liquidColor;
+            simCtx.fillRect(beakerX + 4, beakerY + beakerH - liquidLevel, beakerW - 8, liquidLevel - 4);
+
+            // Glass outline
+            simCtx.strokeStyle = '#94a3b8';
+            simCtx.lineWidth = 4;
+            simCtx.beginPath();
+            simCtx.moveTo(beakerX, beakerY);
+            simCtx.lineTo(beakerX, beakerY + beakerH);
+            simCtx.lineTo(beakerX + beakerW, beakerY + beakerH);
+            simCtx.lineTo(beakerX + beakerW, beakerY);
+            simCtx.stroke();
+
+            // Beaker scale marks
+            simCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+            simCtx.lineWidth = 2;
+            for(let m = 20; m < beakerH; m += 30) {
+                simCtx.beginPath();
+                simCtx.moveTo(beakerX + beakerW - 15, beakerY + beakerH - m);
+                simCtx.lineTo(beakerX + beakerW, beakerY + beakerH - m);
+                simCtx.stroke();
+            }
+
+            // 4. Render Ions inside beaker liquid
+            const ions = titrationState.particles;
+            for(let i=0; i<ions.length; i++) {
+                let ion = ions[i];
+                ion.x += ion.vx;
+                ion.y += ion.vy;
+
+                const minX = beakerX + 15;
+                const maxX = beakerX + beakerW - 15;
+                const minY = beakerY + beakerH - liquidLevel + 15;
+                const maxY = beakerY + beakerH - 15;
+
+                if (ion.x < minX) { ion.x = minX; ion.vx *= -1; }
+                if (ion.x > maxX) { ion.x = maxX; ion.vx *= -1; }
+                if (ion.y < minY) { ion.y = minY; ion.vy *= -1; }
+                if (ion.y > maxY) { ion.y = maxY; ion.vy *= -1; }
+
+                simCtx.beginPath();
+                if (ion.type === 'H') {
+                    simCtx.arc(ion.x, ion.y, 6, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#ef4444'; 
+                    simCtx.fill();
+                } else if (ion.type === 'OH') {
+                    simCtx.arc(ion.x, ion.y, 6, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#3b82f6'; 
+                    simCtx.fill();
+                } else if (ion.type === 'Na') {
+                    simCtx.arc(ion.x, ion.y, 5, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#10b981'; 
+                    simCtx.fill();
+                } else if (ion.type === 'Cl' || ion.type === 'Ac') {
+                    simCtx.arc(ion.x, ion.y, 5.5, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#84cc16'; 
+                    simCtx.fill();
+                } else if (ion.type === 'HAc') {
+                    simCtx.arc(ion.x, ion.y, 8, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#78716c'; 
+                    simCtx.fill();
+                } else if (ion.type === 'H2O') {
+                    simCtx.arc(ion.x, ion.y, 4, 0, Math.PI * 2);
+                    simCtx.strokeStyle = 'rgba(147, 197, 253, 0.4)';
+                    simCtx.stroke();
+                }
+            }
+
+            // 5. Draw pH strip / readout
+            simCtx.fillStyle = '#1e293b';
+            simCtx.fillRect(20, 20, 160, 60);
+            simCtx.strokeStyle = '#475569';
+            simCtx.strokeRect(20, 20, 160, 60);
+            
+            simCtx.fillStyle = '#f1f5f9';
+            simCtx.font = 'bold 12px Noto Sans KR';
+            simCtx.fillText('실시간 pH 계측기', 30, 40);
+            
+            let phColor = '#ef4444'; 
+            if (titrationState.ph > 6.5 && titrationState.ph < 7.5) phColor = '#10b981'; 
+            else if (titrationState.ph >= 7.5) phColor = '#3b82f6'; 
+
+            simCtx.fillStyle = phColor;
+            simCtx.font = 'bold 24px Noto Sans KR';
+            simCtx.fillText(`${titrationState.ph.toFixed(2)}`, 30, 68);
+
+            document.getElementById('equation-value').innerText = `pH = ${titrationState.ph.toFixed(2)}`;
+            document.getElementById('sim-status').innerHTML = `
+                <div>• 적정 온도: <span class="text-white">25.0 °C</span></div>
+                <div>• 강하 투입량: <span class="text-pink-400 font-bold">${titrationState.addedBaseVolume.toFixed(1)} mL</span></div>
+                <div>• 지시약 색상: <span class="text-pink-400 font-bold">${titrationState.ph > 8.2 ? '자홍색' : '무색'}</span></div>
+                <div>• 수용액 산도: <span class="font-bold" style="color: ${phColor};">${titrationState.ph < 7 ? '산성' : (titrationState.ph > 7 ? '염기성' : '중성')}</span></div>
+            `;
+
+            animationFrameId = requestAnimationFrame(loopTitration);
+        }
+
+        // --- SIMULATION 3: ELECTROLYSIS (염화나트륨 전기분해) ---
+        function initElectrolysisSimulation() {
+            document.getElementById('visualizer-title').innerText = "NaCl(염화나트륨) 전기분해 미시 모델링";
+            document.getElementById('visualizer-desc').innerText = "염화나트륨 용융액 and 수용액 전기분해의 메커니즘을 전극 계면의 이온 거동과 함께 시각화합니다.";
+            
+            setElectrolysisType('melt'); 
+            loopElectrolysis();
+        }
+
+        function setElectrolysisType(type) {
+            electrolysisState.type = type;
+            
+            const meltBtn = document.getElementById('btn-elec-melt');
+            const aqBtn = document.getElementById('btn-elec-aqueous');
+
+            if(type === 'melt') {
+                meltBtn.className = "bg-indigo-600 text-white py-1.5 rounded-lg text-xs font-semibold border border-indigo-500 transition";
+                aqBtn.className = "bg-slate-800 text-slate-400 py-1.5 rounded-lg text-xs font-semibold border border-transparent hover:text-white transition";
+
+                document.getElementById('equation-display').innerHTML = `2NaCl(l) <span class="text-indigo-400 font-bold">→</span> 2Na(l) + Cl₂(g)`;
+                document.getElementById('equation-desc').innerText = "Na+ 이온은 (-)극으로 끌려가 전자를 받아 환원되고, Cl- 이온은 (+)극에서 전자를 내어놓고 산화됩니다.";
+                document.getElementById('eq-minus-reaction').innerText = "Na⁺ + e⁻ → Na";
+                document.getElementById('eq-plus-reaction').innerText = "2Cl⁻ → Cl₂ + 2e⁻";
+
+                document.getElementById('molecule-legend').innerHTML = `
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-400 inline-block"></span><span>소듐 이온 (Na⁺)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span><span>염화 이온 (Cl⁻)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span><span>염소 기체 버블 (Cl₂)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-slate-300 inline-block"></span><span>액체 소듐 금속 (Na)</span></div>
+                `;
+            } else {
+                meltBtn.className = "bg-slate-800 text-slate-400 py-1.5 rounded-lg text-xs font-semibold border border-transparent hover:text-white transition";
+                aqBtn.className = "bg-indigo-600 text-white py-1.5 rounded-lg text-xs font-semibold border border-indigo-500 transition";
+
+                document.getElementById('equation-display').innerHTML = `2NaCl(aq) + 2H₂O(l) <span class="text-indigo-400 font-bold">→</span> H₂(g) + Cl₂(g) + 2NaOH(aq)`;
+                document.getElementById('equation-desc').innerText = "수용액 상태에서는 물(H2O)이 Na+보다 먼저 환원되어 H2 기체가 발생하고, 수산화 나트륨(NaOH)이 남습니다.";
+                document.getElementById('eq-minus-reaction').innerText = "2H₂O + 2e⁻ → H₂ + 2OH⁻";
+                document.getElementById('eq-plus-reaction').innerText = "2Cl⁻ → Cl₂ + 2e⁻";
+
+                document.getElementById('molecule-legend').innerHTML = `
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-400 inline-block"></span><span>소듐 이온 (Na⁺)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span><span>염화 이온 (Cl⁻)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-pink-500 inline-block"></span><span>수산화 이온 (OH⁻)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full border border-blue-400/50 bg-slate-900 inline-block"></span><span>물 분자 (H₂O)</span></div>
+                `;
+            }
+
+            electrolysisState.particles = [];
+            electrolysisState.anodeProducts = [];
+            electrolysisState.cathodeProducts = [];
+            
+            const w = simCanvas.width / (window.devicePixelRatio || 1);
+            const h = simCanvas.height / (window.devicePixelRatio || 1);
+
+            for(let i=0; i<25; i++) {
+                electrolysisState.particles.push({
+                    type: 'Na',
+                    x: 100 + Math.random() * (w - 200),
+                    y: 150 + Math.random() * 200,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    charge: 1
+                });
+                electrolysisState.particles.push({
+                    type: 'Cl',
+                    x: 100 + Math.random() * (w - 200),
+                    y: 150 + Math.random() * 200,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    charge: -1
+                });
+
+                if (type === 'aqueous') {
+                    electrolysisState.particles.push({
+                        type: 'H2O',
+                        x: 100 + Math.random() * (w - 200),
+                        y: 150 + Math.random() * 200,
+                        vx: (Math.random() - 0.5) * 1,
+                        vy: (Math.random() - 0.5) * 1,
+                        charge: 0
+                    });
+                }
+            }
+        }
+
+        function loopElectrolysis() {
+            const dpr = window.devicePixelRatio || 1;
+            const w = simCanvas.width / dpr;
+            const h = simCanvas.height / dpr;
+            simCtx.clearRect(0, 0, w, h);
+
+            const bathX = 60;
+            const bathY = 100;
+            const bathW = w - 120;
+            const bathH = 260;
+
+            simCtx.strokeStyle = '#475569';
+            simCtx.lineWidth = 4;
+            simCtx.strokeRect(bathX, bathY, bathW, bathH);
+            simCtx.fillStyle = 'rgba(30, 41, 59, 0.3)';
+            simCtx.fillRect(bathX, bathY, bathW, bathH);
+
+            const anodeX = bathX + bathW * 0.25;
+            const cathodeX = bathX + bathW * 0.75;
+            const electrodeY = bathY - 20;
+            const electrodeW = 20;
+            const electrodeH = 220;
+
+            simCtx.fillStyle = '#64748b';
+            simCtx.fillRect(anodeX, electrodeY, electrodeW, electrodeH);
+            simCtx.strokeStyle = '#94a3b8';
+            simCtx.strokeRect(anodeX, electrodeY, electrodeW, electrodeH);
+            
+            simCtx.fillStyle = '#475569';
+            simCtx.fillRect(cathodeX, electrodeY, electrodeW, electrodeH);
+            simCtx.strokeStyle = '#64748b';
+            simCtx.strokeRect(cathodeX, electrodeY, electrodeW, electrodeH);
+
+            simCtx.fillStyle = '#ef4444'; 
+            simCtx.font = 'bold 12px sans-serif';
+            simCtx.fillText('(+)극 산화 (Anode)', anodeX - 35, electrodeY - 10);
+            
+            simCtx.fillStyle = '#3b82f6'; 
+            simCtx.fillText('(-)극 환원 (Cathode)', cathodeX - 35, electrodeY - 10);
+
+            const fieldStrength = electrolysisState.voltage * 0.25;
+
+            let ions = electrolysisState.particles;
+            for(let i=0; i<ions.length; i++) {
+                let ion = ions[i];
+
+                if (ion.charge > 0) {
+                    ion.vx += (cathodeX + 10 - ion.x) * 0.0001 * fieldStrength;
+                } else if (ion.charge < 0) {
+                    ion.vx += (anodeX + 10 - ion.x) * 0.0001 * fieldStrength;
+                } else if (ion.type === 'H2O') {
+                    ion.vx += (cathodeX + 10 - ion.x) * 0.00002 * fieldStrength;
+                }
+
+                ion.x += ion.vx + (Math.random() - 0.5) * 0.5;
+                ion.y += ion.vy + (Math.random() - 0.5) * 0.5;
+
+                if (ion.x < bathX + 15) { ion.x = bathX + 15; ion.vx *= -1; }
+                if (ion.x > bathX + bathW - 15) { ion.x = bathX + bathW - 15; ion.vx *= -1; }
+                if (ion.y < bathY + 20) { ion.y = bathY + 20; ion.vy *= -1; }
+                if (ion.y > bathY + bathH - 15) { ion.y = bathY + bathH - 15; ion.vy *= -1; }
+
+                if (ion.type === 'Cl' && Math.abs(ion.x - anodeX) < 15 && Math.random() < 0.05 * fieldStrength) {
+                    electrolysisState.anodeProducts.push({
+                        x: anodeX + (Math.random() - 0.5) * 30,
+                        y: ion.y,
+                        vy: -(1 + Math.random() * 2),
+                        opacity: 1
+                    });
+                    ion.x = bathX + bathW/2 + (Math.random()-0.5)*100;
+                    ion.y = bathY + bathH - 50;
+                    ion.vx = (Math.random()-0.5)*2;
+                }
+
+                if (electrolysisState.type === 'melt') {
+                    if (ion.type === 'Na' && Math.abs(ion.x - cathodeX) < 15 && Math.random() < 0.05 * fieldStrength) {
+                        electrolysisState.cathodeProducts.push({
+                            x: cathodeX + (Math.random() - 0.5) * 30,
+                            y: ion.y,
+                            vy: 0.2 + Math.random()*0.3, 
+                            opacity: 1
+                        });
+                        ion.x = bathX + bathW/2 + (Math.random()-0.5)*100;
+                        ion.y = bathY + bathH - 50;
+                        ion.vx = (Math.random()-0.5)*2;
+                    }
+                } else {
+                    if (ion.type === 'H2O' && Math.abs(ion.x - cathodeX) < 15 && Math.random() < 0.05 * fieldStrength) {
+                        electrolysisState.cathodeProducts.push({
+                            x: cathodeX + (Math.random() - 0.5) * 30,
+                            y: ion.y,
+                            vy: -(1.5 + Math.random() * 2), 
+                            opacity: 1
+                        });
+                        ion.type = 'OH';
+                        ion.charge = -1; 
+                    }
+                }
+
+                simCtx.beginPath();
+                if (ion.type === 'Na') {
+                    simCtx.arc(ion.x, ion.y, 6, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#3b82f6'; 
+                    simCtx.fill();
+                } else if (ion.type === 'Cl') {
+                    simCtx.arc(ion.x, ion.y, 7, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#22c55e'; 
+                    simCtx.fill();
+                } else if (ion.type === 'OH') {
+                    simCtx.arc(ion.x, ion.y, 5, 0, Math.PI * 2);
+                    simCtx.fillStyle = '#ec4899'; 
+                    simCtx.fill();
+                } else if (ion.type === 'H2O') {
+                    simCtx.arc(ion.x, ion.y, 4, 0, Math.PI * 2);
+                    simCtx.strokeStyle = 'rgba(147, 197, 253, 0.3)';
+                    simCtx.stroke();
+                }
+            }
+
+            for(let k = 0; k < electrolysisState.anodeProducts.length; k++) {
+                let ap = electrolysisState.anodeProducts[k];
+                ap.y += ap.vy;
+                simCtx.beginPath();
+                simCtx.arc(ap.x, ap.y, 6, 0, Math.PI*2);
+                simCtx.fillStyle = 'rgba(234, 179, 8, 0.6)'; 
+                simCtx.fill();
+
+                if (ap.y < bathY) {
+                    electrolysisState.anodeProducts.splice(k, 1);
+                    k--;
+                }
+            }
+
+            for(let k = 0; k < electrolysisState.cathodeProducts.length; k++) {
+                let cp = electrolysisState.cathodeProducts[k];
+                cp.y += cp.vy;
+                simCtx.beginPath();
+                if (electrolysisState.type === 'melt') {
+                    simCtx.arc(cp.x, cp.y, 8, 0, Math.PI*2);
+                    simCtx.fillStyle = '#cbd5e1'; 
+                    simCtx.fill();
+                    if (cp.y > bathY + bathH - 10) {
+                        electrolysisState.cathodeProducts.splice(k, 1);
+                        k--;
+                    }
+                } else {
+                    simCtx.arc(cp.x, cp.y, 5, 0, Math.PI*2);
+                    simCtx.fillStyle = 'rgba(147, 197, 253, 0.6)'; 
+                    simCtx.fill();
+                    if (cp.y < bathY) {
+                        electrolysisState.cathodeProducts.splice(k, 1);
+                        k--;
+                    }
+                }
+            }
+
+            document.getElementById('equation-value').innerText = `${electrolysisState.voltage.toFixed(1)} V`;
+            document.getElementById('sim-status').innerHTML = `
+                <div>• 전기 환경: <span class="text-white">${electrolysisState.type === 'melt' ? 'NaCl 용융액' : 'NaCl 수용액'}</span></div>
+                <div>• 전류세기 지표: <span class="text-yellow-400 font-bold">${(electrolysisState.voltage * 1.8).toFixed(1)} mA</span></div>
+                <div>• 양극(+) 생성물: <span class="text-yellow-400 font-bold">Cl₂ (염소 기체)</span></div>
+                <div>• 음극(-) 생성물: <span class="text-sky-400 font-bold">${electrolysisState.type === 'melt' ? 'Na (소듐 금속)' : 'H₂ (수소 기체)'}</span></div>
+            `;
+
+            animationFrameId = requestAnimationFrame(loopElectrolysis);
+        }
+
+        // --- PERIODIC TABLE VIEW AND SELECTION ---
+        function renderPeriodicTable() {
+            const grid = document.getElementById('periodic-table-grid');
+            grid.innerHTML = '';
+
+            // Render periodic elements correctly based on group and period
+            for (let r = 1; r <= 4; r++) {
+                for (let c = 1; c <= 18; c++) {
+                    const el = elements.find(item => item.period === r && item.group === c);
+                    
+                    if (el) {
+                        const div = document.createElement('div');
+                        div.className = `p-1 rounded border ${el.color} flex flex-col justify-between cursor-pointer transition transform hover:scale-105 select-none h-14 sm:h-16`;
+                        div.onclick = () => selectElement(el.no);
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center leading-none">
+                                <span class="text-[8px] sm:text-[9px] font-mono opacity-60">${el.no}</span>
+                                <span class="text-[8px] sm:text-[9px] font-mono font-bold">${el.electronegativity ? el.electronegativity.toFixed(1) : '-'}</span>
+                            </div>
+                            <div class="text-center font-bold text-sm sm:text-base leading-none tracking-wide">${el.symbol}</div>
+                            <div class="text-[7px] sm:text-[8px] text-center opacity-80 overflow-hidden text-ellipsis whitespace-nowrap">${el.name}</div>
+                        `;
+                        grid.appendChild(div);
+                    } else {
+                        const spacer = document.createElement('div');
+                        spacer.className = 'h-14 sm:h-16 border border-transparent';
+                        grid.appendChild(spacer);
+                    }
+                }
+            }
+        }
+
+        function populateBondDropdowns() {
+            const selectA = document.getElementById('bond-select-A');
+            const selectB = document.getElementById('bond-select-B');
+            
+            selectA.innerHTML = '';
+            selectB.innerHTML = '';
+
+            const eligible = elements.filter(el => el.electronegativity !== null);
+
+            eligible.forEach(el => {
+                const optA = document.createElement('option');
+                optA.value = el.no;
+                optA.innerText = `${el.symbol} (${el.name})`;
+                selectA.appendChild(optA);
+
+                const optB = document.createElement('option');
+                optB.value = el.no;
+                optB.innerText = `${el.symbol} (${el.name})`;
+                selectB.appendChild(optB);
+            });
+
+            selectA.value = 1;  
+            selectB.value = 17; 
+            
+            updateBondAnalysis();
+        }
+
+        function updateBondAnalysis() {
+            const idA = parseInt(document.getElementById('bond-select-A').value);
+            const idB = parseInt(document.getElementById('bond-select-B').value);
+
+            const elA = elements.find(el => el.no === idA);
+            const elB = elements.find(el => el.no === idB);
+
+            if (!elA || !elB) return;
+
+            const enA = elA.electronegativity;
+            const enB = elB.electronegativity;
+            const diff = Math.abs(enA - enB);
+
+            document.getElementById('bond-en-diff').innerText = diff.toFixed(2);
+            document.getElementById('bond-vis-nodeA').innerText = elA.symbol;
+            document.getElementById('bond-vis-enA').innerText = `EN: ${enA.toFixed(2)}`;
+            document.getElementById('bond-vis-nodeB').innerText = elB.symbol;
+            document.getElementById('bond-vis-enB').innerText = `EN: ${enB.toFixed(2)}`;
+
+            let bondType = "";
+            let badgeClass = "";
+            if (diff === 0) {
+                bondType = "완전 무극성 공유 결합";
+                badgeClass = "bg-green-500/10 text-green-400 border border-green-500/20";
+            } else if (diff < 0.4) {
+                bondType = "무극성 공유 결합";
+                badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            } else if (diff < 1.7) {
+                bondType = "극성 공유 결합";
+                badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            } else {
+                bondType = "이온 결합 성향 우세";
+                badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/20";
+            }
+
+            const badge = document.getElementById('bond-polarity-badge');
+            badge.innerText = bondType;
+            badge.className = `text-[10px] font-semibold px-2 py-0.5 rounded ${badgeClass}`;
+
+            const vectorTxt = document.getElementById('dipole-vector-text');
+            if (enA === enB) {
+                vectorTxt.innerText = "전자 균등 공유";
+            } else if (enA < enB) {
+                vectorTxt.innerText = `${elA.symbol} ➔ ${elB.symbol} (δ⁺ ➔ δ⁻)`;
+            } else {
+                vectorTxt.innerText = `${elB.symbol} ➔ ${elA.symbol} (δ⁺ ➔ δ⁻)`;
+            }
+        }
+
+        let ePosition = 0.5; 
+        function animateBondElectrons() {
+            const idA = parseInt(document.getElementById('bond-select-A')?.value);
+            const idB = parseInt(document.getElementById('bond-select-B')?.value);
+
+            if (idA && idB) {
+                const elA = elements.find(el => el.no === idA);
+                const elB = elements.find(el => el.no === idB);
+
+                if (elA && elB) {
+                    const enA = elA.electronegativity;
+                    const enB = elB.electronegativity;
+                    
+                    const totalEN = enA + enB;
+                    let targetPos = 0.5; 
+                    
+                    if (totalEN > 0) {
+                        const ratio = enB / totalEN;
+                        targetPos = 0.2 + (ratio - 0.5) * 0.9;
+                    }
+
+                    ePosition += (targetPos - ePosition) * 0.1;
+
+                    const eDot = document.getElementById('bond-electron-dot');
+                    const eDot2 = document.getElementById('bond-electron-dot-2');
+                    
+                    if (eDot && eDot2) {
+                        const pct = ePosition * 100;
+                        eDot.style.left = `${pct}%`;
+                        eDot2.style.left = `${pct + 3}%`; 
+                    }
+                }
+            }
+            requestAnimationFrame(animateBondElectrons);
+        }
+
+        function selectElement(atomicNo) {
+            const el = elements.find(item => item.no === atomicNo);
+            if (!el) return;
+
+            document.getElementById('element-detail-placeholder').classList.add('hidden');
+            const content = document.getElementById('element-detail-content');
+            content.classList.remove('hidden');
+
+            // Find related molecule for quick preview link
+            let relativeMoleculeBtn = "";
+            if (['C', 'H', 'O', 'N', 'Cl'].includes(el.symbol)) {
+                let targetMol = "H2O";
+                if (el.symbol === 'C') targetMol = "CO2";
+                if (el.symbol === 'N') targetMol = "NH3";
+                if (el.symbol === 'Cl') targetMol = "HCl";
+                
+                relativeMoleculeBtn = `
+                    <button onclick="switchTab('periodic'); loadMolecule('${targetMol}');" class="w-full mt-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10">
+                        <i class="fa-solid fa-cube animate-pulse"></i> ${el.symbol}가 중심이 되는 분자 구조 보기 (${targetMol})
+                    </button>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <div class="w-16 h-16 rounded-xl flex flex-col items-center justify-center border font-bold text-2xl ${el.color.split(' ')[0]} text-white shadow-inner">
+                        <span class="text-[10px] font-mono opacity-50 block">${el.no}</span>
+                        ${el.symbol}
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white">${el.name}</h4>
+                        <p class="text-xs text-slate-400">분류: ${el.type === 'alkali' ? '알칼리 금속' : (el.type === 'alkaline-earth' ? '알칼리 토금속' : (el.type === 'metal' ? '전이/금속 원소' : (el.type === 'nonmetal' ? '비금속 원소' : (el.type === 'noble' ? '비활성 기체' : '준금속 원소'))))}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-500 block">원자량</span>
+                        <span class="text-sm font-bold font-mono text-white">${el.weight.toFixed(3)} g/mol</span>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-500 block">폴링 전기 음성도</span>
+                        <span class="text-sm font-bold font-mono text-indigo-400">${el.electronegativity ? el.electronegativity.toFixed(2) : '기록 없음 (비활성)'}</span>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4 text-xs space-y-1">
+                    <h5 class="font-bold text-indigo-400">화학적 특징 및 팁:</h5>
+                    <p class="text-slate-300 leading-relaxed">
+                        ${getChemistryTip(el.symbol)}
+                    </p>
+                </div>
+                ${relativeMoleculeBtn}
+            `;
+        }
+
+        function getChemistryTip(symbol) {
+            const tips = {
+                'H': '가장 가볍고 가장 풍부한 우주 원소입니다. 수용액에서 H⁺ 이온은 사실상 물과 결합한 하이드로늄 이온(H₃O⁺)으로 존재하며 산성의 근원입니다.',
+                'He': '반응성이 완전히 무시되는 비활성 기체입니다. 최외각 전자 껍질에 2개의 전자가 꽉 차 있어 화학 반응을 거의 하지 않습니다.',
+                'Li': '가장 밀도가 낮은 금속으로, 강력한 이온화 경향성을 가져 고밀도 리튬 이온 전지의 핵심 양극 물질로 널리 사용됩니다.',
+                'Be': '가볍고 튼튼하지만, 원소와 화합물 자체는 극독성을 가집니다. 항공우주 분야에 귀중하게 사용됩니다.',
+                'B': '준금속 원소로서 붕산염 유리 제작이나 세라믹의 첨가물로 자주 쓰이며, 반도체의 p형 도펀트로 들어갑니다.',
+                'C': '유기화학의 대들보 원소입니다. 네 개의 단일 결합을 이뤄 사슬형, 고리형 등 수천만 가지의 탄소 화합물 구조를 만들어냅니다.',
+                'N': '질소 기체는 강력한 삼중 공유결합(N≡N)으로 공기의 약 78%를 차지하고 매우 안정하지만, 암모니아 등의 화합물은 무한한 비료의 원천이 됩니다.',
+                'O': '지구 지각과 생명체에 가장 큰 비중을 차지합니다. 다른 원소를 산화시키는 강력한 산화제로서 전기 음성도가 두 번째로 강합니다 (3.44).',
+                'F': '가장 높은 전기 음성도(3.98)를 가진 미친 반응성의 물질입니다. 결합 에너지가 너무 높아 불화 화합물은 매우 단단하고 안정하게 변합니다.',
+                'Ne': '비활성 기체로, 전압을 가하면 붉은 전자기파(네온 사인)를 내뿜습니다. 옥텟 규칙을 완벽하게 충족하고 있습니다.',
+                'Na': '매우 무른 은백색 알칼리 금속입니다. 물과 매우 폭렬하게 반응하여 Na⁺ 이온과 함께 수소 기체(H₂) 및 강한 염기 수산화나트륨(NaOH)을 생성합니다.',
+                'Mg': '엽록소의 중심 금속 원소로 들어가며 매우 밝은 은백색 불꽃을 튀기며 산화 마그네슘(MgO)이 됩니다.',
+                'Al': '지각에 세 번째로 풍부한 원소이나 제련 시 엄청난 전력(전기분해)이 소모됩니다. 고체 표면에 치밀한 산화막을 입혀 산화를 자연 방지합니다.',
+                'Si': '규소는 지구 지각의 주요 성분(모래)이며 반도체 혁명의 심장입니다. 탄소와 같은 14족 원소로 공유결합 망상 구조를 이룹니다.',
+                'P': '세포의 에너지 저장 단위인 ATP 및 유전물질 DNA 골격을 형성하는 인산염의 원소로 생명 유행에 필수적입니다.',
+                'S': '독특한 단사황, 사방황 동소체를 가지며 계란 노른자나 단백질 속에 이황화 결합(-S-S-)을 결합시켜 단백질의 3차원 모양을 구성합니다.',
+                'Cl': '매우 강렬한 소독제 및 소금(NaCl)의 음이온입니다. 상온에서 이원자 분자 Cl₂ 녹황색 기체로 높은 활성도를 가집니다.',
+                'Ar': '공기 중에 세 번째로 많은 기체이며 형광등 내부 충전 가스나 반도체 웨이퍼 가공의 비활성 분위기 충전에 소요됩니다.',
+                'K': '생명체의 신경 전달 물질 제어에 매우 중요한 알칼리 금속이여 소듐보다 더욱 물과 극렬한 폭발 반응을 일으킵니다.',
+                'Ca': '생물체의 뼈와 조개껍데기 성분(CaCO₃)이며, 수용액에서 Ca²⁺ 이온은 센물을 형성하여 비누의 거품을 저해합니다.'
+            };
+            return tips[symbol] || '기본 주기율표 2주기/3주기의 대표적인 원소 정보입니다.';
+        }
+
+        // --- MOLECULE CHART & POLAR CHARGE VISUALIZER ---
+        const moleculesData = {
+            'H2O': {
+                name: '물 (H₂O)',
+                centerAtom: '산소 (O)',
+                electronegativityDiff: 'O(3.44) - H(2.20) = 1.24',
+                type: '극성 분자 (굽은형, ~104.5°)',
+                desc: '산소(O)의 전기 음성도가 수소(H)보다 훨씬 강해 공유 전자쌍이 산소 방향으로 편향됩니다. 이로 인해 산소는 부분적 음전하(δ⁻), 수소는 부분적 양전하(δ⁺)를 띠게 되며 강력한 수소 결합과 물의 여러 특이 현상을 만들어냅니다.',
+                draw: function(ctx, time, w, h) {
+                    const cx = w / 2;
+                    const cy = h / 2 + 10;
+                    
+                    // Center Atom Ring Highlight (중심원자 회전 효과)
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - 20, 42, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.setLineDash([]); // reset
+
+                    // Oxygen (O) Center
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - 20, 30, 0, Math.PI*2);
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.fillText('O', cx - 7, cy - 14);
+                    
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText('δ⁻', cx - 25, cy - 40);
+
+                    // Hydrogen 1 (Left)
+                    const h1x = cx - 55;
+                    const h1y = cy + 25;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 15, cy - 5);
+                    ctx.lineTo(h1x, h1y);
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(h1x, h1y, 16, 0, Math.PI*2);
+                    ctx.fillStyle = '#3b82f6'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText('H', h1x - 5, h1y + 4);
+                    ctx.fillText('δ⁺', h1x + 10, h1y + 20);
+
+                    // Hydrogen 2 (Right)
+                    const h2x = cx + 55;
+                    const h2y = cy + 25;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + 15, cy - 5);
+                    ctx.lineTo(h2x, h2y);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(h2x, h2y, 16, 0, Math.PI*2);
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText('H', h2x - 5, h2y + 4);
+                    ctx.fillText('δ⁺', h2x - 20, h2y + 20);
+
+                    // Draw Dipole Moment Arrow (합성 쌍극자 모멘트)
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy + 30);
+                    ctx.lineTo(cx, cy - 50);
+                    ctx.stroke();
+                    // Arrow head
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 6, cy - 45);
+                    ctx.lineTo(cx, cy - 55);
+                    ctx.lineTo(cx + 6, cy - 45);
+                    ctx.fillStyle = '#a855f7';
+                    ctx.fill();
+                    ctx.font = 'bold 10px Noto Sans KR';
+                    ctx.fillText('합성 쌍극자 모멘트', cx + 10, cy - 25);
+                }
+            },
+            'CO2': {
+                name: '이산화 탄소 (CO₂)',
+                centerAtom: '탄소 (C)',
+                electronegativityDiff: 'O(3.44) - C(2.55) = 0.89',
+                type: '무극성 분자 (선형, 180°)',
+                desc: '중심 원자인 탄소(C)와 산소(O) 결합 자체는 전기음성도 차이로 극성 결합이지만, 분자 구조가 일직선 형태(180도)로 대칭을 이룹니다. 양측 산소 방향으로 잡아당기는 쌍극자 모멘트의 크기가 같고 방향이 완전히 반대여서 합성 쌍극자 모멘트는 0(무극성)이 됩니다.',
+                draw: function(ctx, time, w, h) {
+                    const cx = w / 2;
+                    const cy = h / 2;
+
+                    // Center Atom Highlight
+                    ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 38, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.setLineDash([]); 
+
+                    // Carbon (C) Center
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 26, 0, Math.PI*2);
+                    ctx.fillStyle = '#64748b'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.fillText('C', cx - 5, cy + 5);
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+                    ctx.fillText('δ⁺', cx - 7, cy - 30);
+
+                    // Double Bonds lines Left & Right
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 4;
+                    // Left Bond
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 26, cy - 4); ctx.lineTo(cx - 74, cy - 4);
+                    ctx.moveTo(cx - 26, cy + 4); ctx.lineTo(cx - 74, cy + 4);
+                    // Right Bond
+                    ctx.moveTo(cx + 26, cy - 4); ctx.lineTo(cx + 74, cy - 4);
+                    ctx.moveTo(cx + 26, cy + 4); ctx.lineTo(cx + 74, cy + 4);
+                    ctx.stroke();
+
+                    // Left Oxygen (O)
+                    ctx.beginPath();
+                    ctx.arc(cx - 80, cy, 22, 0, Math.PI*2);
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('O', cx - 85, cy + 5);
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+                    ctx.fillText('δ⁻', cx - 85, cy - 26);
+
+                    // Right Oxygen (O)
+                    ctx.beginPath();
+                    ctx.arc(cx + 80, cy, 22, 0, Math.PI*2);
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('O', cx + 75, cy + 5);
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+                    ctx.fillText('δ⁻', cx + 75, cy - 26);
+
+                    // Draw Opposing Dipole Arrows (상쇄)
+                    ctx.strokeStyle = '#ea580c';
+                    ctx.lineWidth = 2;
+                    // Left pull
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 10, cy + 25); ctx.lineTo(cx - 65, cy + 25);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 60, cy + 21); ctx.lineTo(cx - 67, cy + 25); ctx.lineTo(cx - 60, cy + 29);
+                    ctx.fillStyle = '#ea580c'; ctx.fill();
+
+                    // Right pull
+                    ctx.beginPath();
+                    ctx.moveTo(cx + 10, cy + 25); ctx.lineTo(cx + 65, cy + 25);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(cx + 60, cy + 21); ctx.lineTo(cx + 67, cy + 25); ctx.lineTo(cx + 60, cy + 29);
+                    ctx.fillStyle = '#ea580c'; ctx.fill();
+
+                    ctx.fillStyle = '#ea580c';
+                    ctx.font = '10px Noto Sans KR';
+                    ctx.fillText('쌍극자 상쇄 (합계 = 0)', cx - 50, cy + 45);
+                }
+            },
+            'NH3': {
+                name: '암모니아 (NH₃)',
+                centerAtom: '질소 (N)',
+                electronegativityDiff: 'N(3.04) - H(2.20) = 0.84',
+                type: '극성 분자 (삼각뿔형, ~107°)',
+                desc: '중심 원자인 질소(N) 머리에 비공유 전자쌍 1쌍이 강하게 자리를 차지하여 3개의 N-H 결합을 아래로 밀어내는 삼각뿔 입체 구조입니다. 질소 쪽으로 전하 분산이 밀집되는 합성 쌍극자가 생겨 강한 극성을 보입니다.',
+                draw: function(ctx, time, w, h) {
+                    const cx = w / 2;
+                    const cy = h / 2 - 10;
+
+                    // Center Atom Highlight
+                    ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - 10, 38, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.setLineDash([]); 
+
+                    // Nitrogen (N)
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - 10, 26, 0, Math.PI*2);
+                    ctx.fillStyle = '#ec4899'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 15px sans-serif';
+                    ctx.fillText('N', cx - 6, cy - 5);
+                    ctx.fillStyle = 'rgba(236, 72, 153, 0.8)';
+                    ctx.fillText('δ⁻', cx - 22, cy - 25);
+
+                    // Unshared Electron Pair (비공유전자쌍 비주얼)
+                    ctx.beginPath();
+                    ctx.arc(cx - 7, cy - 35, 3, 0, Math.PI*2);
+                    ctx.arc(cx + 7, cy - 35, 3, 0, Math.PI*2);
+                    ctx.fillStyle = '#facc15';
+                    ctx.fill();
+
+                    // Bonds
+                    ctx.strokeStyle = '#64748b';
+                    ctx.lineWidth = 3;
+                    
+                    const hOffsets = [
+                        {x: -45, y: 35},
+                        {x: 0, y: 50},
+                        {x: 45, y: 35}
+                    ];
+
+                    hOffsets.forEach(h => {
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy + 5);
+                        ctx.lineTo(cx + h.x, cy + h.y);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.arc(cx + h.x, cy + h.y, 14, 0, Math.PI*2);
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.fillText('H', cx + h.x - 4, cy + h.y + 4);
+                    });
+
+                    // Composite Dipole Moment Arrow
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy + 50);
+                    ctx.lineTo(cx, cy - 50);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 5, cy - 45); ctx.lineTo(cx, cy - 55); ctx.lineTo(cx + 5, cy - 45);
+                    ctx.fillStyle = '#a855f7'; ctx.fill();
+                }
+            },
+            'CH4': {
+                name: '메테인 (CH₄)',
+                centerAtom: '탄소 (C)',
+                electronegativityDiff: 'C(2.55) - H(2.20) = 0.35',
+                type: '무극성 분자 (정사면체형, 109.5°)',
+                desc: '중심 원자인 탄소(C)를 주축으로 4개의 수소가 완벽한 정사면체 대칭 구조를 이루고 있습니다. 비록 결합 자체에 아주 미세한 극성 차이(0.35)가 있으나 사방 대칭성으로 인해 모든 모멘트가 완벽히 상쇄되어 완전한 무극성이 됩니다.',
+                draw: function(ctx, time, w, h) {
+                    const cx = w / 2;
+                    const cy = h / 2 - 10;
+
+                    // Center Atom Highlight
+                    ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 35, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.setLineDash([]); 
+
+                    // Central Carbon
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 24, 0, Math.PI*2);
+                    ctx.fillStyle = '#64748b';
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.fillText('C', cx - 5, cy + 5);
+
+                    const bonds = [
+                        {x: 0, y: -50},   
+                        {x: -45, y: 35},  
+                        {x: 15, y: 45},   
+                        {x: 45, y: 25}    
+                    ];
+
+                    ctx.strokeStyle = '#475569';
+                    ctx.lineWidth = 3;
+                    bonds.forEach(b => {
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.lineTo(cx + b.x, cy + b.y);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.arc(cx + b.x, cy + b.y, 13, 0, Math.PI*2);
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.fillText('H', cx + b.x - 4, cy + b.y + 4);
+                    });
+
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '10px Noto Sans KR';
+                    ctx.fillText('완전 대칭 정사면체 (쌍극자 총합 = 0)', cx - 80, cy + 70);
+                }
+            },
+            'HCl': {
+                name: '염화 수소 (HCl)',
+                centerAtom: '염소 (Cl)',
+                electronegativityDiff: 'Cl(3.16) - H(2.20) = 0.96',
+                type: '극성 분자 (선형, 이원자)',
+                desc: '염소(Cl)가 매우 높은 전기 음성도(3.16)를 가져 수소의 전자밀도를 크게 가져갑니다. 이원자 분자로 상쇄될 다른 대칭적 결합이 아예 존재하지 않으므로 결합 자체의 극성이 곧 분자의 극성이 되며 매우 강한 극성을 나타냅니다.',
+                draw: function(ctx, time, w, h) {
+                    const cx = w / 2;
+                    const cy = h / 2;
+
+                    const hx = cx - 50;
+                    const clx = cx + 50;
+
+                    // Center Atom Highlight
+                    ctx.strokeStyle = 'rgba(34, 197, 94, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(clx, cy, 38, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.setLineDash([]); 
+
+                    // Covalent Bond line
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.moveTo(hx, cy);
+                    ctx.lineTo(clx, cy);
+                    ctx.stroke();
+
+                    // Hydrogen Atom (Small)
+                    ctx.beginPath();
+                    ctx.arc(hx, cy, 18, 0, Math.PI*2);
+                    ctx.fillStyle = '#3b82f6'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText('H', hx - 5, cy + 4);
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+                    ctx.fillText('δ⁺', hx - 5, cy - 24);
+
+                    // Chlorine Atom (Large)
+                    ctx.beginPath();
+                    ctx.arc(clx, cy, 28, 0, Math.PI*2);
+                    ctx.fillStyle = '#22c55e'; 
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.fillText('Cl', clx - 8, cy + 5);
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+                    ctx.fillText('δ⁻', clx - 8, cy - 35);
+
+                    // Dipole Moment Arrow
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(hx, cy + 25);
+                    ctx.lineTo(clx, cy + 25);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(clx - 6, cy + 21); ctx.lineTo(clx + 1, cy + 25); ctx.lineTo(clx - 6, cy + 29);
+                    ctx.fillStyle = '#a855f7'; ctx.fill();
+                }
+            }
+        };
+
+        function loadMolecule(molId) {
+            currentMolecule = molId;
+            document.querySelectorAll('.mol-selector-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-slate-800', 'text-slate-400');
+            });
+            document.getElementById(`btn-mol-${molId}`).classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+            document.getElementById(`btn-mol-${molId}`).classList.remove('bg-slate-800', 'text-slate-400');
+
+            const md = moleculesData[molId];
+            document.getElementById('molecule-info-text').innerHTML = `
+                <div class="flex justify-between border-b border-slate-800 pb-1.5 mb-2">
+                    <span class="font-bold text-slate-200">${md.name}</span>
+                    <span class="text-indigo-400 font-bold">${md.type}</span>
+                </div>
+                <div class="space-y-1">
+                    <div><span class="text-slate-500 font-medium">🔑 중심 원자:</span> <span class="font-bold text-amber-400">${md.centerAtom}</span></div>
+                    <div><span class="text-slate-500 font-medium">전기음성도 차:</span> <span class="font-mono text-white">${md.electronegativityDiff}</span></div>
+                </div>
+                <div class="mt-2.5 leading-relaxed text-slate-300 font-sans">${md.desc}</div>
+            `;
+
+            drawMoleculeStructure();
+        }
+
+        function drawMoleculeStructure() {
+            const w = molCanvas.width / (window.devicePixelRatio || 1);
+            const h = molCanvas.height / (window.devicePixelRatio || 1);
+            molCtx.clearRect(0, 0, w, h);
+
+            const md = moleculesData[currentMolecule];
+            if (md) {
+                md.draw(molCtx, Date.now() * 0.001, w, h);
+            }
+        }
+    </script>
+</body>
+</html>
