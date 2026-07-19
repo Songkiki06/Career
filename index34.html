@@ -1,0 +1,1393 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디지털마당</title>
+    <!-- Tailwind CSS CDN 및 Font Awesome 아이콘 불러오기 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 기본 누구나 사용하기 편리한 폰트 크기 및 터치 영역 최적화 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 스크롤바 숨기기 */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* 펄스 애니메이션 (가이드라인 강조용) */
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .guide-pulse {
+            animation: pulse-border 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen p-0 sm:p-4">
+
+    <!-- 모바일 앱 화면 비율의 컨테이너 -->
+    <div class="w-full max-w-md h-screen sm:h-[840px] bg-white sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col relative sm:border-8 sm:border-gray-800">
+        
+        <!-- 스마트폰 상단 바 데코레이션 -->
+        <div class="hidden sm:flex w-full bg-gray-900 h-6 justify-between items-center px-6 text-xs text-white relative shrink-0">
+            <span>10:28 PM</span>
+            <div class="w-20 h-4 bg-black rounded-full absolute left-1/2 transform -translate-x-1/2 top-1"></div>
+            <div class="flex items-center gap-1">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <!-- 1. 앱 헤더 -->
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 text-center shadow-md relative shrink-0">
+            <h1 id="page-title" class="text-2xl font-black tracking-tight">디지털마당</h1>
+            <p class="text-xs text-blue-100 mt-1 font-bold">우리 동네 가장 쉬운 디지털 배움터</p>
+            
+            <!-- 음성 읽어주기 토글 스위치 -->
+            <button onclick="toggleVoice()" id="voice-toggle" class="absolute right-4 top-5 bg-blue-500 hover:bg-blue-400 text-white rounded-full p-2 text-xs flex items-center gap-1 font-bold transition shadow-inner">
+                <i class="fa-solid fa-volume-high"></i>
+                <span id="voice-status">소리 켬</span>
+            </button>
+        </header>
+
+        <!-- 가상 스마트폰 상단 가상 알림 푸시 배너 -->
+        <div id="push-banner" class="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur border-l-4 border-amber-500 shadow-xl rounded-xl p-4 transform -translate-y-40 transition-transform duration-500 z-50 flex gap-3 items-start">
+            <div class="bg-amber-100 text-amber-600 p-2 rounded-full">
+                <i class="fa-solid fa-bell text-lg"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-gray-900 text-sm">새로운 디지털 기기 알림</h4>
+                <p id="push-message" class="text-xs text-gray-600 mt-0.5">우리 동네 우체국에 '신형 무인 우편 접수기'가 도입되었습니다!</p>
+            </div>
+            <button onclick="hidePushBanner()" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 2. 메인 콘텐츠 영역 -->
+        <main class="flex-1 overflow-y-auto p-5 pb-24 bg-slate-50 relative flex flex-col">
+
+            <!-- [페이지 1] 홈 화면 -->
+            <div id="page-home" class="page space-y-5">
+                <!-- 연령 통합형 친근한 환영 배너 -->
+                <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-4 rounded-r-xl shadow-sm">
+                    <p class="font-bold text-base flex items-center gap-2">
+                        <span class="text-xl">👋</span> <span>반가워요! 디지털마당입니다.</span>
+                    </p>
+                    <p class="text-sm mt-1 text-emerald-700 font-medium">원하시는 디지털 연습이나 요즘 세상의 유익하고 재미있는 소식들을 아래에서 골라보세요.</p>
+                </div>
+
+                <button onclick="switchPage('kiosk')" class="w-full bg-white border-2 border-blue-500 hover:bg-blue-50 text-blue-600 rounded-2xl p-6 text-left shadow-md flex items-center justify-between transition group">
+                    <div>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">인기 배움터</span>
+                        <h3 class="text-xl font-bold mt-2 text-gray-800">🎮 실전 키오스크 연습</h3>
+                        <p class="text-xs text-gray-500 mt-1">진짜 기계와 똑같이 만든 화면으로 주문을 연습해요.</p>
+                    </div>
+                    <span class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg shadow group-hover:scale-110 transition"><i class="fa-solid fa-play"></i></span>
+                </button>
+
+                <button onclick="switchPage('ranking')" class="w-full bg-white border-2 border-purple-500 hover:bg-purple-50 text-purple-600 rounded-2xl p-6 text-left shadow-md flex items-center justify-between transition group">
+                    <div>
+                        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold font-black">실시간 랭킹</span>
+                        <h3 class="text-xl font-bold mt-2 text-gray-800">🏆 키오스크 명예의 전당</h3>
+                        <p class="text-xs text-gray-500 mt-1">주문 속도와 정확도 미션을 클리어하고 나의 랭킹을 확인해요!</p>
+                    </div>
+                    <span class="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg shadow group-hover:scale-110 transition"><i class="fa-solid fa-trophy"></i></span>
+                </button>
+
+                <button onclick="switchPage('media')" class="w-full bg-white border-2 border-orange-500 hover:bg-orange-50 text-orange-600 rounded-2xl p-6 text-left shadow-md flex items-center justify-between transition group">
+                    <div>
+                        <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">새 소식</span>
+                        <h3 class="text-xl font-bold mt-2 text-gray-800">📰 새로운 디지털 소식</h3>
+                        <p class="text-xs text-gray-500 mt-1">요즘 새로 생긴 식당 로봇이나 기계들의 비밀을 알려드려요.</p>
+                    </div>
+                    <span class="bg-orange-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg shadow group-hover:scale-110 transition"><i class="fa-solid fa-newspaper"></i></span>
+                </button>
+
+                <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-gray-800 text-base mb-2">🔔 알림 받기 미리 체험</h3>
+                    <p class="text-xs text-gray-500 mb-3 leading-relaxed">새로운 기계(무인 키오스크, 배달 로봇 등)가 동네에 들어오면 받아볼 수 있는 가상 푸시 알림을 발송해봅니다.</p>
+                    <button onclick="simulatePush()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> 가상 알림 보내보기
+                    </button>
+                </div>
+            </div>
+
+            <!-- [페이지 2] 키오스크 목록 및 시뮬레이터 -->
+            <div id="page-kiosk" class="page hidden h-full flex flex-col">
+                
+                <!-- 키오스크 종류 선택 메뉴 -->
+                <div id="kiosk-menu" class="space-y-4">
+                    <h3 class="font-black text-gray-800 text-lg mb-2">연습할 기계를 선택하세요</h3>
+                    <p class="text-xs text-slate-500 font-bold bg-purple-50 text-purple-700 p-2.5 rounded-xl border border-purple-200"><i class="fa-solid fa-bolt"></i> 시작하기를 누르면 타이머가 켜지며 랭킹에 도전할 수 있습니다!</p>
+                    
+                    <div onclick="startRealKiosk('cafe')" class="bg-amber-50 hover:bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-5 cursor-pointer flex items-center gap-4 transition shadow-sm">
+                        <div class="bg-amber-500 text-white rounded-2xl w-14 h-14 flex items-center justify-center text-2xl shadow-md">☕</div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-lg">동네 커피 카페 (실전형)</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">카테고리 다변화 및 상세 옵션(당도/사이즈) 실전 연습</p>
+                        </div>
+                    </div>
+
+                    <div onclick="startRealKiosk('burger')" class="bg-red-50 hover:bg-red-100/80 border-2 border-red-300 rounded-2xl p-5 cursor-pointer flex items-center gap-4 transition shadow-sm">
+                        <div class="bg-red-500 text-white rounded-2xl w-14 h-14 flex items-center justify-center text-2xl shadow-md">🍔</div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-lg">패스트푸드 햄버거집 (실전형)</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">단품/세트 자유교체 및 다양한 결제 수단 모의 실습</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 실시간 가상 키오스크 작동 화면 -->
+                <div id="kiosk-simulator" class="hidden flex-1 flex flex-col bg-slate-100 text-slate-800 rounded-2xl overflow-hidden border-4 border-slate-700 shadow-lg min-h-[520px]">
+                    
+                    <!-- 1. 키오스크 상단 가이드 팁 및 타이머 -->
+                    <div class="bg-yellow-100 text-yellow-900 p-3 text-xs font-bold border-b border-yellow-200 flex justify-between items-center shrink-0">
+                        <div class="flex items-start gap-1.5 max-w-[70%]">
+                            <span class="text-sm">💡</span>
+                            <span id="kiosk-tip-text">상단 가이드 문구</span>
+                        </div>
+                        <div class="bg-purple-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 font-black">
+                            <i class="fa-solid fa-stopwatch animate-pulse"></i>
+                            <span id="kiosk-timer">00초</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. 매장 로고 및 상단바 -->
+                    <div class="bg-slate-800 text-white px-4 py-2.5 flex justify-between items-center shrink-0">
+                        <span id="kiosk-logo-text" class="font-black text-sm text-yellow-400">STORE LOGO</span>
+                        <button onclick="exitKiosk()" class="bg-red-500 hover:bg-red-600 text-white text-[11px] px-2 py-1 rounded font-bold transition">
+                            <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i>연습종료
+                        </button>
+                    </div>
+
+                    <!-- 3. 키오스크 메인 프레임 (카테고리 탭 + 메뉴 영역) -->
+                    <div class="flex-1 flex overflow-hidden min-h-[280px]">
+                        
+                        <!-- 왼쪽 세로 카테고리 탭 -->
+                        <div id="kiosk-categories" class="w-20 bg-slate-200 border-r border-slate-300 flex flex-col shrink-0 overflow-y-auto">
+                            <!-- 카테고리 동적 추가 -->
+                        </div>
+
+                        <!-- 오른쪽 메뉴 격자판 -->
+                        <div class="flex-1 bg-white p-3 overflow-y-auto">
+                            <div id="kiosk-menu-grid" class="grid grid-cols-2 gap-2.5">
+                                <!-- 메뉴 아이템 동적 추가 -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 4. 장바구니 영역 -->
+                    <div class="bg-slate-800 text-white p-3 border-t border-slate-700 shrink-0 flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center text-xs text-slate-300">
+                            <span>🛒 장바구니에 담긴 내역 (<span id="cart-count">0</span>개)</span>
+                            <button onclick="clearCart()" class="text-[10px] text-red-300 underline font-bold">전체 비우기</button>
+                        </div>
+                        
+                        <!-- 장바구니 간이 리스트 -->
+                        <div id="cart-list" class="max-h-20 overflow-y-auto text-xs space-y-1 bg-slate-900/50 p-1.5 rounded border border-slate-700">
+                            <p class="text-slate-400 text-center py-1">선택한 메뉴가 아직 없습니다.</p>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-1.5 border-t border-slate-700">
+                            <div class="text-left">
+                                <span class="text-xs text-slate-400 font-bold block">총 결제금액</span>
+                                <span id="cart-total-price" class="text-lg font-black text-amber-400">0원</span>
+                            </div>
+                            <button onclick="openCheckoutStep()" class="bg-green-500 hover:bg-green-400 text-white px-5 py-3 rounded-xl font-extrabold text-sm shadow-md transition active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-credit-card"></i> 결제하기
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 옵션 커스텀 상세 팝업창 -->
+                <div id="option-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-end sm:items-center p-4 hidden">
+                    <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col border-4 border-slate-700 animate-slide-up">
+                        <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                            <h3 id="option-item-name" class="font-black text-lg">메뉴 옵션 선택</h3>
+                            <button onclick="closeOptionModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="p-5 overflow-y-auto max-h-[420px] space-y-4" id="option-container-body">
+                            <!-- 동적 옵션 렌더링 -->
+                        </div>
+                        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                            <div class="text-left">
+                                <span class="text-xs text-gray-400 font-bold block">예상 결제 금액</span>
+                                <span id="option-total-price" class="text-lg font-black text-red-500">0원</span>
+                            </div>
+                            <button onclick="addSelectedOptionsToCart()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-sm transition shadow-md">
+                                장바구니 담기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결제 수단 선택 전용 팝업창 -->
+                <div id="pay-method-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-6 hidden">
+                    <div class="bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl border-4 border-blue-500">
+                        <div class="text-4xl text-blue-600 mb-2"><i class="fa-solid fa-wallet"></i></div>
+                        <h3 class="text-xl font-black text-gray-950">💳 결제 수단 선택</h3>
+                        <p class="text-xs text-slate-500 mt-1 font-bold">어떻게 결제하시겠습니까? 하나를 골라보세요.</p>
+                        
+                        <div class="grid grid-cols-1 gap-2.5 mt-5">
+                            <button onclick="choosePaymentMethod('card')" class="w-full bg-slate-50 hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-400 rounded-2xl py-3.5 px-4 font-black text-sm text-slate-800 transition flex items-center gap-3">
+                                <span class="text-xl text-blue-500"><i class="fa-solid fa-credit-card"></i></span>
+                                <div class="text-left">
+                                    <p class="font-black text-slate-900">신용카드 / 체크카드 (IC)</p>
+                                    <p class="text-[10px] text-slate-400 font-bold">기계 카드 구멍에 직접 꽂기</p>
+                                </div>
+                            </button>
+                            
+                            <button onclick="choosePaymentMethod('samsung')" class="w-full bg-slate-50 hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-400 rounded-2xl py-3.5 px-4 font-black text-sm text-slate-800 transition flex items-center gap-3">
+                                <span class="text-xl text-indigo-500"><i class="fa-solid fa-mobile-screen-button"></i></span>
+                                <div class="text-left">
+                                    <p class="font-black text-slate-900">삼성페이 / 모바일 페이</p>
+                                    <p class="text-[10px] text-slate-400 font-bold">스마트폰 뒷면을 기계에 대기</p>
+                                </div>
+                            </button>
+                            
+                            <button onclick="choosePaymentMethod('kakao')" class="w-full bg-slate-50 hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-400 rounded-2xl py-3.5 px-4 font-black text-sm text-slate-800 transition flex items-center gap-3">
+                                <span class="text-xl text-yellow-500"><i class="fa-solid fa-qrcode"></i></span>
+                                <div class="text-left">
+                                    <p class="font-black text-slate-900">카카오페이 (바코드/QR)</p>
+                                    <p class="text-[10px] text-slate-400 font-bold">화면의 바코드를 카메라에 인식</p>
+                                </div>
+                            </button>
+
+                            <button onclick="choosePaymentMethod('naver')" class="w-full bg-slate-50 hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-400 rounded-2xl py-3.5 px-4 font-black text-sm text-slate-800 transition flex items-center gap-3">
+                                <span class="text-xl text-emerald-500"><i class="fa-solid fa-barcode"></i></span>
+                                <div class="text-left">
+                                    <p class="font-black text-slate-900">네이버페이 (바코드/QR)</p>
+                                    <p class="text-[10px] text-slate-400 font-bold">화면의 바코드를 카메라에 인식</p>
+                                </div>
+                            </button>
+                        </div>
+
+                        <button onclick="closePayMethodModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-2.5 mt-4 rounded-xl text-xs transition">
+                            취소하고 메뉴판으로 돌아가기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 가상 결제 실행 완료 대기 팝업창 -->
+                <div id="payment-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-6 hidden">
+                    <div class="bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl border-4 border-emerald-500 animate-slide-up">
+                        <div class="text-5xl mb-4 text-emerald-500" id="payment-icon-box"><i class="fa-solid fa-credit-card animate-bounce"></i></div>
+                        <h3 class="text-xl font-black text-gray-950" id="payment-guide-title">💳 결제 대기 중</h3>
+                        <p class="text-xs text-slate-500 mt-1 font-bold" id="payment-guide-subtitle">신용카드를 대고 기다려주세요.</p>
+                        
+                        <!-- 리얼 이미지 설명 가이드 대용 박스 -->
+                        <div id="payment-method-visual" class="my-5 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 text-xs font-bold text-emerald-800 flex flex-col items-center gap-2">
+                            <!-- 결제방식 이미지 설명글 동적 삽입 -->
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left my-4 space-y-1 text-xs font-bold">
+                            <p class="text-gray-500">주문 품목: <span id="pay-summary" class="text-gray-800">아메리카노 외 1개</span></p>
+                            <p class="text-gray-500">최종 청구금액: <span id="pay-price" class="text-red-500 text-sm font-black">0원</span></p>
+                        </div>
+
+                        <button onclick="processFinalPayment()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition active:scale-95" id="payment-action-btn">
+                            결제 완료하기
+                        </button>
+                        <button onclick="closePaymentModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-2.5 mt-2 rounded-xl text-xs transition">
+                            취소하고 돌아가기
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- [페이지 4] 랭킹 명예의 전당 페이지 -->
+            <div id="page-ranking" class="page hidden flex-1 flex flex-col h-full space-y-4">
+                <div class="bg-purple-50 border-l-4 border-purple-500 text-purple-900 p-4 rounded-r-xl shadow-sm shrink-0">
+                    <p class="font-bold text-base flex items-center gap-2">
+                        <span>🏆</span> <span>디지털 명예의 전당 (Top 7)</span>
+                    </p>
+                    <p class="text-xs mt-1 text-purple-700 font-bold leading-relaxed">
+                        연습 주문을 신속 정확하게 끝내면 실시간 랭킹에 이름이 등록됩니다. 앱을 껐다 켜도 클라우드 데이터베이스를 통해 등수가 영구 저장됩니다!
+                    </p>
+                </div>
+
+                <!-- 랭킹 전체 테이블 (스크롤 영역) -->
+                <div class="flex-1 bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col min-h-[220px]">
+                    <div class="bg-gradient-to-r from-purple-700 to-indigo-700 text-white px-4 py-3 text-sm font-black flex justify-between items-center shrink-0">
+                        <span>실시간 통합 등수 (7위까지)</span>
+                        <span class="text-xs text-purple-100">전국 챌린저 리그</span>
+                    </div>
+
+                    <!-- 명예의 전당 리스트 스크롤 영역 -->
+                    <div id="ranking-list-container" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                        <div class="text-center py-10 text-slate-400 text-xs font-bold">
+                            <i class="fa-solid fa-circle-notch animate-spin mr-2"></i>랭킹을 클라우드에서 불러오는 중...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- [나만 볼 수 있는 내 최고 기록 고정 카드] -->
+                <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-xl shrink-0 border-2 border-indigo-500">
+                    <div class="flex justify-between items-center text-xs font-bold text-indigo-300 mb-1.5 border-b border-indigo-900 pb-1.5">
+                        <span>👤 나만 볼 수 있는 내 최고 기록</span>
+                        <span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full text-[10px]">기기 고유 ID 연동</span>
+                    </div>
+                    <div id="my-personal-record-container" class="flex justify-between items-center">
+                        <p class="text-slate-400 text-xs font-bold py-1.5">아직 등록된 랭킹 기록이 없습니다. 키오스크 연습을 완수해 보세요!</p>
+                    </div>
+                </div>
+                
+                <div class="text-center shrink-0">
+                    <button onclick="switchPage('kiosk')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3.5 rounded-2xl text-sm shadow-md transition active:scale-95">
+                        🥇 신기록 갱신하러 연습장 가기
+                    </button>
+                </div>
+            </div>
+
+            <!-- [페이지 5] 새로운 미디어 가이드 설명 화면 -->
+            <div id="page-media" class="page hidden space-y-4">
+                <div class="bg-orange-50 border-l-4 border-orange-500 text-orange-900 p-4 rounded-r-xl shadow-sm mb-4">
+                    <p class="font-bold text-base">🆕 요즘 들어 보이는 새로운 기계 설명서</p>
+                    <p class="text-xs mt-1 text-orange-700">식당이나 마트에 갑자기 생겨서 우리를 당황하게 만드는 기계들을 알기 쉽게 풀어 드립니다.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i>식당에 많아요</span>
+                        <span class="text-xs text-gray-400 font-bold">2026 최신 소식</span>
+                    </div>
+                    <h3 class="text-lg font-black text-gray-800">자리에서 바로 결제하는 '테이블 오더'</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed font-medium">
+                        요즘 식당 테이블 구석에 자그마한 태블릿이 달린 것을 보셨나요? 종업원을 부르지 않고 앉아서 터치로 고르고 결제하는 기기입니다.
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5 font-bold text-slate-700">
+                        <p>💡 <strong>쉬운 사용법 순서:</strong></p>
+                        <p>1. 화면 속 먹고 싶은 음식 그림을 콕 찍어 장바구니에 넣기</p>
+                        <p>2. 화면 오른쪽 아래의 [주문하기] 혹은 [결제하기] 누르기</p>
+                        <p>3. 테이블 아래 설치된 카드 리더기에 신용카드를 깊게 꽂아두기</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold"><i class="fa-solid fa-robot mr-1"></i>자율 주행 로봇</span>
+                        <span class="text-xs text-gray-400 font-bold">초보 가이드</span>
+                    </div>
+                    <h3 class="text-lg font-black text-gray-800">음식을 나르는 '서빙 로봇' 대처하기</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed font-medium">
+                        가게 복도를 돌아다니며 음식을 실어다 주는 자율 주행 서빙 로봇입니다. 부딪힐까 봐 무서워할 필요가 전혀 없어요!
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5 font-bold text-slate-700">
+                        <p>💡 <strong>기본 규칙:</strong></p>
+                        <p>1. 로봇이 오면 사람을 자동으로 감지하고 멈추니 안심하세요.</p>
+                        <p>2. 우리 테이블로 와서 멈추면 선반 위의 음식을 우리 테이블로 옮겨요.</p>
+                        <p>3. 음식 수령 완료 후, 로봇 머리에 달린 화면의 <span class="text-blue-600 font-black">[출발]</span> 또는 <span class="text-blue-600 font-black">[확인]</span> 버튼을 터치해 주면 로봇이 웃으며 자기 집으로 돌아갑니다.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 3. 하단 탭 내비게이션 바 -->
+        <nav class="absolute bottom-0 left-0 w-full h-[72px] bg-white border-t border-gray-200 flex justify-around items-center py-2 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] shrink-0">
+            <button id="nav-home" onclick="switchPage('home')" class="flex flex-col items-center gap-1 text-blue-600 transition">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] font-bold">홈 화면</span>
+            </button>
+            <button id="nav-kiosk" onclick="switchPage('kiosk')" class="flex flex-col items-center gap-1 text-gray-400 transition">
+                <i class="fa-solid fa-circle-play text-lg"></i>
+                <span class="text-[10px] font-bold">연습하기</span>
+            </button>
+            <button id="nav-ranking" onclick="switchPage('ranking')" class="flex flex-col items-center gap-1 text-gray-400 transition">
+                <i class="fa-solid fa-trophy text-lg"></i>
+                <span class="text-[10px] font-bold">실시간 랭킹</span>
+            </button>
+            <button id="nav-media" onclick="switchPage('media')" class="flex flex-col items-center gap-1 text-gray-400 transition">
+                <i class="fa-solid fa-book-open text-lg"></i>
+                <span class="text-[10px] font-bold">새 소식</span>
+            </button>
+        </nav>
+
+        <!-- 4. 커스텀 모달 -->
+        <div id="custom-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-[100] flex justify-center items-center p-6 hidden">
+            <div class="bg-white rounded-3xl w-full p-6 text-center shadow-2xl border-4 border-blue-500 scale-95 transition-transform duration-300 relative">
+                <div class="text-5xl mb-4" id="modal-emoji">🎉</div>
+                <h3 id="modal-title" class="text-xl font-bold text-gray-900">연습 축하합니다!</h3>
+                <p id="modal-body" class="text-sm text-gray-600 mt-2 font-medium leading-relaxed">내용이 표시됩니다.</p>
+                
+                <!-- 닉네임 등록을 위한 인풋 영역 -->
+                <div id="modal-input-area" class="mt-4 hidden text-left space-y-1.5">
+                    <label class="text-xs text-slate-500 font-black block">명예의 전당에 올릴 이름(닉네임)</label>
+                    <input type="text" id="ranking-nickname" placeholder="이름을 입력하세요 (예: 지민)" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-bold">
+                </div>
+
+                <button onclick="closeModal()" id="modal-close-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-base py-3.5 mt-6 rounded-xl shadow-md active:scale-95 transition">
+                    확인하였습니다
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- localStorage 기반 독립 실행 스크립트 -->
+    <script>
+
+        // 전역 상태 변수
+        let rankingsData = [];
+        let currentKioskType = ''; 
+        let kioskCart = [];
+        let activeCategory = '';
+        let currentSelectingItem = null;
+        let selectedOptionsConfig = {};
+        let activePaymentMethod = 'card';
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let bonusPointsAccumulated = 0;
+        let isVoiceEnabled = true;
+        let modalCallback = null;
+
+        // 초반 명예의 전당 활성화를 위한 고품질 가상 랭킹 더미 데이터
+        const dummyRankings = [
+            { name: "도현", points: 1350, time: "15초", type: "카페", userId: "dummy_1" },
+            { name: "수아", points: 1180, time: "22초", type: "햄버거", userId: "dummy_2" },
+            { name: "예준", points: 980, time: "29초", type: "카페", userId: "dummy_3" },
+            { name: "서윤", points: 840, time: "35초", type: "햄버거", userId: "dummy_4" },
+            { name: "하준", points: 610, time: "45초", type: "카페", userId: "dummy_5" }
+        ];
+
+        // localStorage 기반 초기화
+        const LOCAL_KEY = 'digitalMadang_rankings';
+        const userId = 'user_' + (localStorage.getItem('dm_userId') || (() => {
+            const id = Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('dm_userId', id);
+            return id;
+        })());
+        const currentUser = { uid: userId };
+
+        function loadRankings() {
+            try {
+                const stored = localStorage.getItem(LOCAL_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch(e) { return []; }
+        }
+
+        function saveRankings(data) {
+            try {
+                // 실제 사용자 데이터만 저장 (더미 제외)
+                const realData = data.filter(r => !r.userId.startsWith('dummy_'));
+                localStorage.setItem(LOCAL_KEY, JSON.stringify(realData));
+            } catch(e) {}
+        }
+
+        // 초기 랭킹 로드
+        const storedRankings = loadRankings();
+        if (storedRankings.length === 0) {
+            rankingsData = [...dummyRankings];
+        } else {
+            rankingsData = [...storedRankings, ...dummyRankings];
+        }
+        rankingsData.sort((a, b) => b.points - a.points);
+        setTimeout(renderRankings, 100);
+
+        // 3. 비즈니스 로직 함수 정의 및 window 전역 범위 바인딩 (ReferenceError 예방)
+        function speak(text) {
+            if (!isVoiceEnabled) return;
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.0; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleVoice() {
+            isVoiceEnabled = !isVoiceEnabled;
+            const btn = document.getElementById('voice-toggle');
+            const statusText = document.getElementById('voice-status');
+            
+            if (isVoiceEnabled) {
+                statusText.innerText = "소리 켬";
+                btn.innerHTML = `<i class="fa-solid fa-volume-high"></i> <span id="voice-status">소리 켬</span>`;
+                btn.className = "absolute right-4 top-5 bg-blue-500 hover:bg-blue-400 text-white rounded-full p-2 text-xs flex items-center gap-1 font-bold transition shadow-inner";
+                speak("음성 도우미를 켰습니다. 화면을 터치해 연습해보세요.");
+            } else {
+                statusText.innerText = "소리 끔";
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i> <span id="voice-status">소리 끔</span>`;
+                btn.className = "absolute right-4 top-5 bg-gray-500 hover:bg-gray-400 text-white rounded-full p-2 text-xs flex items-center gap-1 font-bold transition shadow-inner";
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            
+            // 내비게이션 버튼들 하이라이트 스타일 제어
+            const navHome = document.getElementById('nav-home');
+            const navKiosk = document.getElementById('nav-kiosk');
+            const navRanking = document.getElementById('nav-ranking');
+            const navMedia = document.getElementById('nav-media');
+
+            if (navHome) navHome.className = pageId === 'home' ? "flex flex-col items-center gap-1 text-blue-600 transition" : "flex flex-col items-center gap-1 text-gray-400 transition";
+            if (navKiosk) navKiosk.className = pageId === 'kiosk' ? "flex flex-col items-center gap-1 text-blue-600 transition" : "flex flex-col items-center gap-1 text-gray-400 transition";
+            if (navRanking) navRanking.className = pageId === 'ranking' ? "flex flex-col items-center gap-1 text-blue-600 transition" : "flex flex-col items-center gap-1 text-gray-400 transition";
+            if (navMedia) navMedia.className = pageId === 'media' ? "flex flex-col items-center gap-1 text-blue-600 transition" : "flex flex-col items-center gap-1 text-gray-400 transition";
+
+            const pageTarget = document.getElementById('page-' + pageId);
+            if (pageTarget) pageTarget.classList.remove('hidden');
+
+            const titles = { home: '디지털마당', kiosk: '키오스크 연습', ranking: '실시간 랭킹', media: '새로운 소식' };
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) pageTitle.innerText = titles[pageId];
+
+            if (pageId === 'home') {
+                speak("홈 화면입니다. 가상 키오스크 연습과 디지털 새소식을 배워볼 수 있습니다.");
+            } else if (pageId === 'kiosk') {
+                speak("가상 키오스크 연습장입니다. 카페 또는 패스트푸드 장소를 손가락으로 콕 찍어서 주문해보세요.");
+                exitKiosk(); 
+            } else if (pageId === 'ranking') {
+                speak("실시간 랭킹 보드입니다. 내 기록과 다른 챌린저들의 랭킹 점수를 구경해보세요.");
+                renderRankings();
+            } else if (pageId === 'media') {
+                speak("새로운 디지털 소식입니다. 테이블 오더와 서빙 로봇 사용 요령을 천천히 읽어보세요.");
+            }
+        }
+
+        function showModal(emoji, title, body, callback = null, showInput = false) {
+            document.getElementById('modal-emoji').innerText = emoji;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = body;
+            modalCallback = callback;
+
+            const inputArea = document.getElementById('modal-input-area');
+            const closeBtn = document.getElementById('modal-close-btn');
+
+            if (showInput) {
+                inputArea.classList.remove('hidden');
+                closeBtn.innerText = "랭킹에 이름 등록하고 자랑하기 🏆";
+                closeBtn.className = "w-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-base py-3.5 mt-6 rounded-xl shadow-md active:scale-95 transition";
+            } else {
+                inputArea.classList.add('hidden');
+                closeBtn.innerText = "확인하였습니다";
+                closeBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-base py-3.5 mt-6 rounded-xl shadow-md active:scale-95 transition";
+            }
+
+            const modal = document.getElementById('custom-modal');
+            modal.classList.remove('hidden');
+            speak(title + ". " + body);
+        }
+
+        function closeModal() {
+            const inputArea = document.getElementById('modal-input-area');
+            let nicknameVal = "";
+            if (!inputArea.classList.contains('hidden')) {
+                nicknameVal = document.getElementById('ranking-nickname').value.trim() || "익명의 도전자";
+            }
+
+            document.getElementById('custom-modal').classList.add('hidden');
+            
+            if (modalCallback) {
+                modalCallback(nicknameVal);
+                modalCallback = null;
+            }
+            document.getElementById('ranking-nickname').value = "";
+        }
+
+        function simulatePush() {
+            const pushMessages = [
+                "우리 동네 주민센터에 '어르신 전용 무인 민원 발급기'가 새로 도입되었습니다!",
+                "메가커피 매장에 아주 손쉬운 '신형 키오스크 기계'가 등장했습니다!",
+                "이제 동네 은행 창구 대기표를 기계 없이 '전화기 터치'로 끊을 수 있다고 합니다!"
+            ];
+            const randomIndex = Math.floor(Math.random() * pushMessages.length);
+            
+            document.getElementById('push-message').innerText = pushMessages[randomIndex];
+            const banner = document.getElementById('push-banner');
+            banner.classList.remove('-translate-y-40');
+            banner.classList.add('translate-y-0');
+
+            speak("띵동! 새로운 디지털 소식이 알림으로 배달왔습니다. 터치해서 확인해보세요.");
+            setTimeout(hidePushBanner, 6000);
+        }
+
+        function hidePushBanner() {
+            const banner = document.getElementById('push-banner');
+            banner.classList.remove('translate-y-0');
+            banner.classList.add('-translate-y-40');
+        }
+
+        // [실시간 랭킹 렌더링 & 내 최고 기록 별도 뷰 제어 로직]
+        function renderRankings() {
+            const container = document.getElementById('ranking-list-container');
+            const myRecordContainer = document.getElementById('my-personal-record-container');
+            
+            container.innerHTML = '';
+
+            if (rankingsData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 text-xs font-bold">
+                        <i class="fa-solid fa-circle-question text-lg mb-2 block"></i> 아직 기록된 데이터가 없습니다.
+                    </div>`;
+                myRecordContainer.innerHTML = `<p class="text-slate-400 text-xs font-bold py-1.5">아직 등록된 나의 최고 랭킹이 없습니다.</p>`;
+                return;
+            }
+
+            let myBestPlayer = null;
+            let myBestRank = 0;
+
+            // 전체 랭킹 정렬 후, 등수를 보존한 상태에서 내 최고 기록의 위치와 데이터를 먼저 체크합니다.
+            rankingsData.forEach((player, index) => {
+                const rankNum = index + 1;
+                const isMe = currentUser && player.userId === currentUser.uid;
+
+                if (isMe && !myBestPlayer) {
+                    myBestPlayer = player;
+                    myBestRank = rankNum;
+                }
+            });
+
+            // 상단 랭킹판에 보여줄 리스트는 슬라이싱을 통해 상위 7개로 제한합니다. (요청 조건 수렴!)
+            const top7Rankings = rankingsData.slice(0, 7);
+
+            // 전체 7개 랭킹만 루프를 돌며 카드 구성
+            top7Rankings.forEach((player, index) => {
+                const rankNum = index + 1;
+                let badge = `<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-black flex items-center justify-center">${rankNum}</span>`;
+                
+                if (rankNum === 1) badge = `<span class="w-6 h-6 rounded-full bg-yellow-400 text-yellow-950 text-xs font-black flex items-center justify-center"><i class="fa-solid fa-crown"></i></span>`;
+                if (rankNum === 2) badge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-slate-800 text-xs font-black flex items-center justify-center"><i class="fa-solid fa-medal"></i></span>`;
+                if (rankNum === 3) badge = `<span class="w-6 h-6 rounded-full bg-amber-600 text-amber-50 text-xs font-black flex items-center justify-center"><i class="fa-solid fa-medal"></i></span>`;
+
+                const isMe = currentUser && player.userId === currentUser.uid;
+
+                const row = document.createElement('div');
+                row.className = `flex justify-between items-center px-4 py-3.5 transition ${isMe ? 'bg-amber-50 border-l-4 border-amber-500 font-extrabold' : 'hover:bg-slate-50'}`;
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${badge}
+                        <div>
+                            <span class="font-extrabold text-slate-900 text-sm">${player.name} ${isMe ? '<span class="text-[10px] bg-amber-200 text-amber-800 px-1 rounded ml-1 font-black">나</span>' : ''}</span>
+                            <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-black ml-1.5">${player.type}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-black text-purple-700 text-sm block">${player.points.toLocaleString()}점</span>
+                        <span class="text-[10px] text-slate-400 font-bold block">소요 시간: ${player.time}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            // 하단 개인기록 카드는 전체 등수를 온전히 반영하여 7위 밖(예: 11등, 15등)이더라도 내 최고 점수를 예쁘게 띄워줍니다.
+            if (myBestPlayer) {
+                myRecordContainer.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-xl bg-indigo-500 text-white font-black text-sm flex items-center justify-center shadow-md">${myBestRank}등</span>
+                        <div>
+                            <p class="font-black text-sm text-white">${myBestPlayer.name}</p>
+                            <p class="text-[10px] text-indigo-300 font-bold">도전 분야: ${myBestPlayer.type} Kiosk</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-black text-amber-400 text-base block">${myBestPlayer.points.toLocaleString()}점</span>
+                        <span class="text-[10px] text-slate-300 block">소요 시간: ${myBestPlayer.time}</span>
+                    </div>
+                `;
+            } else {
+                myRecordContainer.innerHTML = `<p class="text-slate-300 text-xs font-bold py-1.5">아직 완료한 연습이 없습니다. 랭킹에 도전해보세요!</p>`;
+            }
+        }
+
+        const kioskDatabase = {
+            cafe: {
+                logo: "☕ 메가 더 커피",
+                tip: "빵류 디저트는 옵션 없이 바로 담기고, 스무디는 차갑게 전용으로 가동돼요! 옵션을 다양하게 만질수록 보너스 점수를 얻어요.",
+                welcome: "메가 더 커피 매장에 오신 것을 환영합니다! 드시고 싶은 카테고리를 터치해 보세요.",
+                categories: [
+                    { id: "coffee", name: "추천 커피" },
+                    { id: "latte", name: "라떼/티" },
+                    { id: "smoothie", name: "에이드/스무디" },
+                    { id: "traditional", name: "건강 전통차" },
+                    { id: "dessert", name: "달콤 디저트" }
+                ],
+                items: {
+                    coffee: [
+                        { id: "c1", name: "아메리카노", price: 2000, emoji: "☕", type: "cafe", category: "coffee" },
+                        { id: "c2", name: "카페라떼", price: 3000, emoji: "🥛", type: "cafe", category: "coffee" },
+                        { id: "c3", name: "바닐라라떼", price: 3500, emoji: "🍯", type: "cafe", category: "coffee" },
+                        { id: "c4", name: "달콤 카라멜마끼아또", price: 3800, emoji: "🍮", type: "cafe", category: "coffee" },
+                        { id: "c5", name: "콜드브루 돌체라떼", price: 4200, emoji: "🧊", type: "cafe", category: "coffee" }
+                    ],
+                    latte: [
+                        { id: "l1", name: "제주 녹차라떼", price: 3500, emoji: "🍵", type: "cafe", category: "latte" },
+                        { id: "l2", name: "초코 라떼", price: 3300, emoji: "🍫", type: "cafe", category: "latte" },
+                        { id: "l3", name: "달콤 고구마라떼", price: 3700, emoji: "🍠", type: "cafe", category: "latte" },
+                        { id: "l4", name: "캐모마일 허브차", price: 2500, emoji: "🌼", type: "cafe", category: "latte" },
+                        { id: "l5", name: "향긋 얼그레이 홍차", price: 2800, emoji: "🍂", type: "cafe", category: "latte" }
+                    ],
+                    smoothie: [
+                        { id: "s1", name: "딸기 요거트스무디", price: 4000, emoji: "🍓", type: "cafe", category: "smoothie" },
+                        { id: "s2", name: "망고 요거트스무디", price: 4000, emoji: "🥭", type: "cafe", category: "smoothie" },
+                        { id: "s3", name: "레몬 스파클링에이드", price: 3800, emoji: "🍋", type: "cafe", category: "smoothie" },
+                        { id: "s4", name: "블루베리 요거트스무디", price: 4200, emoji: "🍇", type: "cafe", category: "smoothie" },
+                        { id: "s5", name: "청포도 에이드", price: 3800, emoji: "💚", type: "cafe", category: "smoothie" }
+                    ],
+                    traditional: [
+                        { id: "t1", name: "사근사근 대추차", price: 3800, emoji: "🪵", type: "cafe", category: "latte" },
+                        { id: "t2", name: "몸에 좋은 쌍화차", price: 4200, emoji: "🫖", type: "cafe", category: "latte" },
+                        { id: "t3", name: "새콤달콤 매실차", price: 3000, emoji: "🟢", type: "cafe", category: "latte" },
+                        { id: "t4", name: "진한 꿀생강차", price: 3500, emoji: "🫚", type: "cafe", category: "latte" }
+                    ],
+                    dessert: [
+                        { id: "d1", name: "바삭 크로플", price: 2500, emoji: "🧇", type: "cafe", category: "dessert" },
+                        { id: "d2", name: "치즈 케이크", price: 4000, emoji: "🍰", type: "cafe", category: "dessert" },
+                        { id: "d3", name: "고소한 소금빵", price: 2800, emoji: "🥐", type: "cafe", category: "dessert" },
+                        { id: "d4", name: "달콤 초코 마카롱", price: 2000, emoji: "🧁", type: "cafe", category: "dessert" },
+                        { id: "d5", name: "달콤 단팥빵", price: 1800, emoji: "🍩", type: "cafe", category: "dessert" }
+                    ]
+                }
+            },
+            burger: {
+                logo: "🍔리아 버거 가든",
+                tip: "햄버거류만 세트 추가 및 재료 옵션이 나타나고, 감자튀김과 음료는 바로 장바구니에 쏙 담깁니다!",
+                welcome: "리아버거 실전 터치 키오스크입니다. 마음에 드는 상품을 눌러 가볍게 연습해보세요.",
+                categories: [
+                    { id: "premium", name: "프리미엄버거" },
+                    { id: "burgers", name: "추천버거" },
+                    { id: "sides", name: "사이드메뉴" },
+                    { id: "drinks", name: "음료수" }
+                ],
+                items: {
+                    premium: [
+                        { id: "p1", name: "한우 스페셜 더블버거", price: 8500, emoji: "🥩", type: "burger", category: "burger" },
+                        { id: "p2", name: "치즈가득 베이컨토마토버거", price: 6800, emoji: "🥓", type: "burger", category: "burger" },
+                        { id: "p3", name: "매콤 통다리살 치킨버거", price: 5800, emoji: "🌶️", type: "burger", category: "burger" }
+                    ],
+                    burgers: [
+                        { id: "b1", name: "불고기버거", price: 4500, emoji: "🍔", type: "burger", category: "burger" },
+                        { id: "b3", name: "쉬림프 새우버거", price: 4700, emoji: "🍤", type: "burger", category: "burger" },
+                        { id: "b4", name: "치즈 더블 버거", price: 4000, emoji: "🧀", type: "burger", category: "burger" }
+                    ],
+                    sides: [
+                        { id: "sd1", name: "바삭 감자튀김", price: 1800, emoji: "🍟", type: "burger", category: "sides" },
+                        { id: "sd2", name: "고소한 치즈스틱", price: 2000, emoji: "🧀", type: "burger", category: "sides" },
+                        { id: "sd3", name: "어니언 양념감자", price: 2300, emoji: "🧅", type: "burger", category: "sides" },
+                        { id: "sd4", name: "바삭 치킨너겟", price: 2500, emoji: "🍗", type: "burger", category: "sides" }
+                    ],
+                    drinks: [
+                        { id: "dr1", name: "시원한 콜라", price: 1500, emoji: "🥤", type: "burger", category: "drinks" },
+                        { id: "dr2", name: "청량한 사이다", price: 1500, emoji: "🍋", type: "burger", category: "drinks" },
+                        { id: "dr3", name: "오렌지 미닛에이드", price: 2000, emoji: "🍹", type: "burger", category: "drinks" },
+                        { id: "dr4", name: "아이스 아메리카노", price: 2000, emoji: "☕", type: "burger", category: "drinks" }
+                    ]
+                }
+            }
+        };
+
+        function startRealKiosk(type) {
+            currentKioskType = type;
+            kioskCart = [];
+            secondsElapsed = 0;
+            bonusPointsAccumulated = 0;
+            
+            document.getElementById('kiosk-menu').classList.add('hidden');
+            document.getElementById('kiosk-simulator').classList.remove('hidden');
+
+            const db = kioskDatabase[type];
+            document.getElementById('kiosk-logo-text').innerText = db.logo;
+            document.getElementById('kiosk-tip-text').innerText = db.tip;
+
+            const catNav = document.getElementById('kiosk-categories');
+            catNav.innerHTML = '';
+            db.categories.forEach((cat, index) => {
+                const button = document.createElement('button');
+                button.className = `cat-tab-btn py-4 text-xs font-black text-center border-b border-slate-300 transition ${index === 0 ? 'bg-white text-blue-600 border-l-4 border-l-blue-600' : 'bg-slate-200 text-slate-700'}`;
+                button.id = `cat-tab-${cat.id}`;
+                button.innerText = cat.name;
+                button.onclick = () => selectCategory(cat.id);
+                catNav.appendChild(button);
+            });
+
+            clearInterval(timerInterval);
+            document.getElementById('kiosk-timer').innerText = "0초";
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                document.getElementById('kiosk-timer').innerText = secondsElapsed + "초";
+            }, 1000);
+
+            selectCategory(db.categories[0].id);
+            updateCartUI();
+
+            speak(db.welcome);
+        }
+
+        function selectCategory(catId) {
+            activeCategory = catId;
+            const db = kioskDatabase[currentKioskType];
+
+            document.querySelectorAll('.cat-tab-btn').forEach(btn => {
+                btn.className = "cat-tab-btn py-4 text-xs font-black text-center border-b border-slate-300 bg-slate-200 text-slate-700 transition";
+            });
+            const activeTab = document.getElementById(`cat-tab-${catId}`);
+            if (activeTab) {
+                activeTab.className = "cat-tab-btn py-4 text-xs font-black text-center border-b border-slate-300 bg-white text-blue-600 border-l-4 border-l-blue-600 transition";
+            }
+
+            const grid = document.getElementById('kiosk-menu-grid');
+            grid.innerHTML = '';
+            const items = db.items[catId] || [];
+
+            if (items.length === 0) {
+                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-gray-400 py-6">준비된 메뉴가 없습니다.</p>`;
+                return;
+            }
+
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-white border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500 hover:shadow-md transition flex flex-col justify-between items-center h-[125px]";
+                itemDiv.onclick = () => handleItemClick(item);
+                itemDiv.innerHTML = `
+                    <span class="text-3xl">${item.emoji}</span>
+                    <h4 class="font-extrabold text-[11px] text-slate-800 line-clamp-2 mt-1">${item.name}</h4>
+                    <p class="text-xs text-red-500 font-black mt-1">${item.price.toLocaleString()}원</p>
+                `;
+                grid.appendChild(itemDiv);
+            });
+
+            speak(db.categories.find(c => c.id === catId).name + " 카테고리를 열었습니다.");
+        }
+
+        function handleItemClick(item) {
+            if (item.category === 'dessert' || item.category === 'sides' || item.category === 'drinks') {
+                const cartObj = {
+                    id: item.id + '-' + Date.now(),
+                    emoji: item.emoji,
+                    name: item.name,
+                    optionsText: "기본 선택",
+                    price: item.price
+                };
+                kioskCart.push(cartObj);
+                updateCartUI();
+                speak(`${item.name}을 장바구니에 바로 담았습니다.`);
+                return;
+            }
+
+            openOptionModal(item);
+        }
+
+        function openOptionModal(item) {
+            currentSelectingItem = item;
+            document.getElementById('option-item-name').innerText = `${item.emoji} ${item.name} 옵션`;
+            
+            const body = document.getElementById('option-container-body');
+            body.innerHTML = '';
+
+            selectedOptionsConfig = {
+                basePrice: item.price,
+                extraCost: 0
+            };
+
+            if (item.type === 'cafe') {
+                if (item.category === 'smoothie') {
+                    selectedOptionsConfig.temp = 'ICE';
+                    selectedOptionsConfig.size = 'Regular';
+                    selectedOptionsConfig.sweetness = '보통';
+
+                    body.innerHTML = `
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🌡️ 뜨겁게 / 차갑게</label>
+                            <div class="grid grid-cols-1">
+                                <button disabled class="py-2.5 border-2 border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-xs font-black flex items-center justify-center gap-1">
+                                    <span class="text-sm">❄️</span> ICE ONLY (차가운 음료 전용 상품)
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🥤 음료 컵 사이즈</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="opt-size-Regular" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">보통 (Regular)</button>
+                                <button id="opt-size-Large" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">대용량 (+500원)</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🍬 스무디 맛 당도 선택</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button id="opt-sweetness-less" class="opt-sweet-btn py-2 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">덜 달게</button>
+                                <button id="opt-sweetness-normal" class="opt-sweet-btn py-2 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">기본 (보통)</button>
+                                <button id="opt-sweetness-more" class="opt-sweet-btn py-2 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">더 달게</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // 리스너 연결
+                    document.getElementById('opt-size-Regular').onclick = () => setCafeOpt('size', 'Regular', 0);
+                    document.getElementById('opt-size-Large').onclick = () => setCafeOpt('size', 'Large', 500);
+                    document.getElementById('opt-sweetness-less').onclick = () => setSmoothieSweetness('덜 달게');
+                    document.getElementById('opt-sweetness-normal').onclick = () => setSmoothieSweetness('보통');
+                    document.getElementById('opt-sweetness-more').onclick = () => setSmoothieSweetness('더 달게');
+                    
+                    setCafeOpt('size', 'Regular', 0);
+                    setSmoothieSweetness('보통');
+
+                } else {
+                    selectedOptionsConfig.temp = 'ICE';
+                    selectedOptionsConfig.size = 'Regular';
+                    selectedOptionsConfig.milk = '일반우유';
+                    selectedOptionsConfig.shot = 0;
+
+                    body.innerHTML = `
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🌡️ 뜨겁게 / 차갑게</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="opt-temp-HOT" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🔥 HOT (따뜻하게)</button>
+                                <button id="opt-temp-ICE" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">❄️ ICE (차가운 아이스)</button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🥤 음료 컵 사이즈</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="opt-size-Regular" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">보통 (Regular)</button>
+                                <button id="opt-size-Large" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">대용량 (+500원)</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">🥛 우유 변경 가능</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button id="opt-milk-normal" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">일반우유</button>
+                                <button id="opt-milk-soy" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">🥛 두유 (+300)</button>
+                                <button id="opt-milk-oat" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">🌾 오트밀크 (+500)</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-slate-500 block">☕ 진하게 마시기 (에스프레소 샷)</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button id="opt-shot-0" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">없음</button>
+                                <button id="opt-shot-1" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">☕ 1샷 추가 (+500)</button>
+                                <button id="opt-shot-2" class="opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700">☕ 2샷 추가 (+1000)</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // 리스너 연결
+                    document.getElementById('opt-temp-HOT').onclick = () => setCafeOpt('temp', 'HOT');
+                    document.getElementById('opt-temp-ICE').onclick = () => setCafeOpt('temp', 'ICE');
+                    document.getElementById('opt-size-Regular').onclick = () => setCafeOpt('size', 'Regular', 0);
+                    document.getElementById('opt-size-Large').onclick = () => setCafeOpt('size', 'Large', 500);
+                    document.getElementById('opt-milk-normal').onclick = () => setCafeOpt('milk', '일반우유', 0);
+                    document.getElementById('opt-milk-soy').onclick = () => setCafeOpt('milk', '🥛 두유', 300);
+                    document.getElementById('opt-milk-oat').onclick = () => setCafeOpt('milk', '🌾 오트밀크', 500);
+                    document.getElementById('opt-shot-0').onclick = () => setCafeOpt('shot', 0, 0);
+                    document.getElementById('opt-shot-1').onclick = () => setCafeOpt('shot', 1, 500);
+                    document.getElementById('opt-shot-2').onclick = () => setCafeOpt('shot', 2, 1000);
+                    
+                    setCafeOpt('temp', 'ICE', 0);
+                    setCafeOpt('size', 'Regular', 0);
+                    setCafeOpt('milk', '일반우유', 0);
+                    setCafeOpt('shot', 0, 0);
+                }
+
+            } else if (item.type === 'burger') {
+                selectedOptionsConfig.combo = '단품';
+                selectedOptionsConfig.patty = false;
+                selectedOptionsConfig.cheese = false;
+                selectedOptionsConfig.noOnion = false;
+                selectedOptionsConfig.noPickle = false;
+
+                body.innerHTML = `
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-black text-slate-500 block">🍔 구매 형태 결정</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="opt-combo-single" class="opt-btn py-2.5 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🍔 버거 단품</button>
+                            <button id="opt-combo-set" class="opt-btn py-2.5 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🍟 세트 (+2,000원)</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-black text-slate-500 block">🥩 재료 추가 (유료)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="opt-patty" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🥩 고기 패티 추가 (+1,500원)</button>
+                            <button id="opt-cheese" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🧀 체다 치즈 추가 (+500원)</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-black text-slate-500 block">🧅 야채 빼기 요청 (무료)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="opt-noOnion" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🧅 양파 제외</button>
+                            <button id="opt-noPickle" class="opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700">🥒 피클 제외</button>
+                        </div>
+                    </div>
+                `;
+
+                // 리스너 연결
+                document.getElementById('opt-combo-single').onclick = () => setBurgerOpt('combo', '단품', 0);
+                document.getElementById('opt-combo-set').onclick = () => setBurgerOpt('combo', '세트 (+음료,감튀)', 2000);
+                document.getElementById('opt-patty').onclick = () => toggleBurgerAdd('patty', 1500);
+                document.getElementById('opt-cheese').onclick = () => toggleBurgerAdd('cheese', 500);
+                document.getElementById('opt-noOnion').onclick = () => toggleBurgerAdd('noOnion', 0);
+                document.getElementById('opt-noPickle').onclick = () => toggleBurgerAdd('noPickle', 0);
+
+                setBurgerOpt('combo', '단품', 0);
+            }
+
+            document.getElementById('option-modal').classList.remove('hidden');
+            recalcOptionPrice();
+            
+            speak(`${item.name}를 터치했습니다. 원하시는 상세 옵션들을 골라준 뒤 장바구니에 담기 버튼을 누르세요.`);
+        }
+
+        function setCafeOpt(key, val, extraPrice = 0) {
+            if(key === 'temp') {
+                selectedOptionsConfig.temp = val;
+                document.getElementById('opt-temp-HOT').className = val === 'HOT' ? "opt-btn py-2 border-2 border-red-500 bg-red-50 text-red-900 rounded-lg text-xs font-bold" : "opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+                document.getElementById('opt-temp-ICE').className = val === 'ICE' ? "opt-btn py-2 border-2 border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-xs font-bold" : "opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+            }
+            if(key === 'size') {
+                selectedOptionsConfig.size = val;
+                selectedOptionsConfig.sizePrice = extraPrice;
+                document.getElementById('opt-size-Regular').className = val === 'Regular' ? "opt-btn py-2 border-2 border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-xs font-bold" : "opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+                document.getElementById('opt-size-Large').className = val === 'Large' ? "opt-btn py-2 border-2 border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-xs font-bold" : "opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+                if(val === 'Large') bonusPointsAccumulated += 100;
+            }
+            if(key === 'milk') {
+                selectedOptionsConfig.milk = val;
+                selectedOptionsConfig.milkPrice = extraPrice;
+                const milkButtons = { '일반우유': 'opt-milk-normal', '🥛 두유': 'opt-milk-soy', '🌾 오트밀크': 'opt-milk-oat' };
+                Object.keys(milkButtons).forEach(mName => {
+                    const btnId = milkButtons[mName];
+                    const active = mName === val;
+                    const el = document.getElementById(btnId);
+                    if (el) el.className = active ? "opt-btn py-2 border border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-[10px] font-bold" : "opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700";
+                });
+                if(val !== '일반우유') bonusPointsAccumulated += 100;
+            }
+            if(key === 'shot') {
+                selectedOptionsConfig.shot = val;
+                selectedOptionsConfig.shotPrice = extraPrice;
+                [0, 1, 2].forEach(sVal => {
+                    const btnId = `opt-shot-${sVal}`;
+                    const active = sVal === val;
+                    const el = document.getElementById(btnId);
+                    if (el) el.className = active ? "opt-btn py-2 border border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-[10px] font-bold" : "opt-btn py-2 border border-slate-200 rounded-lg text-[10px] font-bold bg-white text-slate-700";
+                });
+                if(val > 0) bonusPointsAccumulated += 100;
+            }
+
+            recalcOptionPrice();
+        }
+
+        function setSmoothieSweetness(sweetText) {
+            selectedOptionsConfig.sweetness = sweetText;
+            const sweetButtons = { '덜 달게': 'opt-sweetness-less', '보통': 'opt-sweetness-normal', '더 달게': 'opt-sweetness-more' };
+            Object.keys(sweetButtons).forEach(sName => {
+                const btnId = sweetButtons[sName];
+                const active = sName === sweetText;
+                const el = document.getElementById(btnId);
+                if (el) el.className = active ? "opt-sweet-btn py-2 border-2 border-blue-500 bg-blue-50 text-blue-900 rounded-lg text-xs font-black" : "opt-sweet-btn py-2 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+            });
+            if(sweetText !== '보통') bonusPointsAccumulated += 100;
+            speak(`당도를 ${sweetText}로 선택하셨습니다.`);
+        }
+
+        function setBurgerOpt(key, val, extraPrice = 0) {
+            if (key === 'combo') {
+                selectedOptionsConfig.combo = val;
+                selectedOptionsConfig.comboPrice = extraPrice;
+                const isSet = val.includes('세트');
+                document.getElementById('opt-combo-single').className = !isSet ? "opt-btn py-2.5 border-2 border-red-500 bg-red-50 text-red-900 rounded-lg text-xs font-bold" : "opt-btn py-2.5 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+                document.getElementById('opt-combo-set').className = isSet ? "opt-btn py-2.5 border-2 border-red-500 bg-red-50 text-red-900 rounded-lg text-xs font-bold" : "opt-btn py-2.5 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+                if(isSet) bonusPointsAccumulated += 100;
+            }
+            recalcOptionPrice();
+        }
+
+        function toggleBurgerAdd(key, price) {
+            selectedOptionsConfig[key] = !selectedOptionsConfig[key];
+            const isChecked = selectedOptionsConfig[key];
+            
+            const targetBtn = document.getElementById(`opt-${key}`);
+            if (targetBtn) {
+                targetBtn.className = isChecked ? "opt-btn py-2 border-2 border-red-500 bg-red-50 text-red-900 rounded-lg text-xs font-bold" : "opt-btn py-2 border-2 border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700";
+            }
+            if(isChecked) bonusPointsAccumulated += 100;
+
+            recalcOptionPrice();
+        }
+
+        function recalcOptionPrice() {
+            let total = selectedOptionsConfig.basePrice;
+
+            if (currentSelectingItem.type === 'cafe') {
+                total += (selectedOptionsConfig.sizePrice || 0);
+                total += (selectedOptionsConfig.milkPrice || 0);
+                total += (selectedOptionsConfig.shotPrice || 0);
+            } else if (currentSelectingItem.type === 'burger') {
+                total += (selectedOptionsConfig.comboPrice || 0);
+                if (selectedOptionsConfig.patty) total += 1500;
+                if (selectedOptionsConfig.cheese) total += 500;
+            }
+
+            document.getElementById('option-total-price').innerText = `${total.toLocaleString()}원`;
+            selectedOptionsConfig.calculatedFinalPrice = total;
+        }
+
+        function closeOptionModal() {
+            document.getElementById('option-modal').classList.add('hidden');
+            currentSelectingItem = null;
+        }
+
+        function addSelectedOptionsToCart() {
+            if (!currentSelectingItem) return;
+
+            let optionSummaryText = '';
+            if (currentSelectingItem.type === 'cafe') {
+                if (currentSelectingItem.category === 'smoothie') {
+                    optionSummaryText = `차갑게(ICE) / ${selectedOptionsConfig.size} / 당도: ${selectedOptionsConfig.sweetness}`;
+                } else {
+                    optionSummaryText = `${selectedOptionsConfig.temp} / ${selectedOptionsConfig.size}`;
+                    if (selectedOptionsConfig.milk !== '일반우유') optionSummaryText += ` / ${selectedOptionsConfig.milk}`;
+                    if (selectedOptionsConfig.shot > 0) optionSummaryText += ` / ☕샷 ${selectedOptionsConfig.shot}개 추가`;
+                }
+            } else {
+                optionSummaryText = `${selectedOptionsConfig.combo}`;
+                let adds = [];
+                if (selectedOptionsConfig.patty) adds.push('🥩패티 추가');
+                if (selectedOptionsConfig.cheese) adds.push('🧀치즈 추가');
+                if (selectedOptionsConfig.noOnion) adds.push('🧅양파 빼기');
+                if (selectedOptionsConfig.noPickle) adds.push('🥒피클 빼기');
+                if (adds.length > 0) optionSummaryText += ` / ${adds.join(', ')}`;
+            }
+
+            const cartObj = {
+                id: currentSelectingItem.id + '-' + Date.now(),
+                emoji: currentSelectingItem.emoji,
+                name: currentSelectingItem.name,
+                optionsText: optionSummaryText,
+                price: selectedOptionsConfig.calculatedFinalPrice
+            };
+
+            kioskCart.push(cartObj);
+            closeOptionModal();
+            updateCartUI();
+
+            speak(`${cartObj.name}를 장바구니에 담았습니다.`);
+        }
+
+        function updateCartUI() {
+            const listDiv = document.getElementById('cart-list');
+            const countSpan = document.getElementById('cart-count');
+            const totalSpan = document.getElementById('cart-total-price');
+
+            if (kioskCart.length === 0) {
+                listDiv.innerHTML = `<p class="text-slate-400 text-center py-1">선택한 메뉴가 아직 없습니다.</p>`;
+                countSpan.innerText = "0";
+                totalSpan.innerText = "0원";
+                return;
+            }
+
+            listDiv.innerHTML = '';
+            let totalSum = 0;
+
+            kioskCart.forEach((cartItem, idx) => {
+                totalSum += cartItem.price;
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center text-slate-100 py-1 bg-slate-800 px-2 rounded border border-slate-700/50";
+                row.innerHTML = `
+                    <div class="text-left max-w-[80%]">
+                        <span class="font-extrabold text-amber-300 text-xs">${cartItem.emoji} ${cartItem.name}</span>
+                        <span class="text-[10px] text-slate-400 block truncate font-semibold">${cartItem.optionsText}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-xs text-white">${cartItem.price.toLocaleString()}원</span>
+                        <button id="remove-btn-${cartItem.id}" class="text-red-400 hover:text-red-300 font-bold px-1 text-sm">×</button>
+                    </div>
+                `;
+                listDiv.appendChild(row);
+
+                // 리스너 연결
+                document.getElementById(`remove-btn-${cartItem.id}`).onclick = () => removeFromCart(cartItem.id);
+            });
+
+            countSpan.innerText = kioskCart.length;
+            totalSpan.innerText = `${totalSum.toLocaleString()}원`;
+        }
+
+        function removeFromCart(id) {
+            kioskCart = kioskCart.filter(item => item.id !== id);
+            updateCartUI();
+            speak("선택한 항목을 제거하였습니다.");
+        }
+
+        function clearCart() {
+            kioskCart = [];
+            updateCartUI();
+            speak("장바구니를 비웠습니다.");
+        }
+
+        function openCheckoutStep() {
+            if (kioskCart.length === 0) {
+                showModal('⚠️', '비어있는 장바구니', '먼저 매장 메뉴판에서 하나 이상의 메뉴를 장바구니에 담아주셔야 결제가 가능합니다!');
+                return;
+            }
+            document.getElementById('pay-method-modal').classList.remove('hidden');
+            speak("결제하기를 눌렀습니다. 사용하고 싶은 결제 방식을 하나 골라보세요.");
+        }
+
+        function closePayMethodModal() {
+            document.getElementById('pay-method-modal').classList.add('hidden');
+        }
+
+        function choosePaymentMethod(method) {
+            activePaymentMethod = method;
+            document.getElementById('pay-method-modal').classList.add('hidden');
+            
+            let totalSum = 0;
+            kioskCart.forEach(item => totalSum += item.price);
+
+            const firstItemName = kioskCart[0].name;
+            const summaryStr = kioskCart.length > 1 ? `${firstItemName} 외 ${kioskCart.length - 1}개` : `${firstItemName}`;
+
+            document.getElementById('pay-summary').innerText = summaryStr;
+            document.getElementById('pay-price').innerText = `${totalSum.toLocaleString()}원`;
+
+            const titleEl = document.getElementById('payment-guide-title');
+            const subTitleEl = document.getElementById('payment-guide-subtitle');
+            const iconBox = document.getElementById('payment-icon-box');
+            const visualBox = document.getElementById('payment-method-visual');
+            const actionBtn = document.getElementById('payment-action-btn');
+
+            if (method === 'card') {
+                titleEl.innerText = "💳 IC카드 결제 대기";
+                subTitleEl.innerText = "기계 아래 투입구에 카드를 끝까지 넣어주세요.";
+                iconBox.innerHTML = `<i class="fa-solid fa-credit-card animate-bounce"></i>`;
+                visualBox.innerHTML = `
+                    <p class="text-left">💡 <strong class="text-emerald-950">카드 꽂는 법 배움 가이드:</strong></p>
+                    <p class="text-left mt-1">1. 신용카드의 노란색 칩이 위로 향하게 잡습니다.</p>
+                    <p class="text-left">2. 오른쪽 아래 카드 구멍에 '딸깍' 소리가 날 때까지 깊게 넣어두세요.</p>
+                `;
+                actionBtn.innerText = "카드를 꽂았습니다 (완료 클릭)";
+                speak("신용카드를 선택하셨습니다. 노란색 칩이 위로 향하게 카드를 쏙 꽂은 뒤 완료 버튼을 터치하세요.");
+
+            } else if (method === 'samsung') {
+                titleEl.innerText = "📱 삼성페이 / 모바일페이";
+                subTitleEl.innerText = "휴대폰 뒷면을 카드 단말기에 밀착해 주세요.";
+                iconBox.innerHTML = `<i class="fa-solid fa-mobile-screen-button animate-pulse text-indigo-500"></i>`;
+                visualBox.innerHTML = `
+                    <p class="text-left">💡 <strong class="text-emerald-950">모바일페이 배움 가이드:</strong></p>
+                    <p class="text-left mt-1">1. 휴대폰 화면에 카드를 띄우고 비밀번호나 지문을 대어 준비합니다.</p>
+                    <p class="text-left">2. 카드 단말기 정면 또는 우측면에 스마트폰 뒷면을 가볍게 밀착하세요.</p>
+                `;
+                actionBtn.innerText = "휴대폰을 갖다 대었습니다 (완료 클릭)";
+                speak("삼성페이를 선택하셨습니다. 휴대폰 카드를 작동시키고 리더기에 폰 뒷면을 살포시 대어주세요.");
+
+            } else if (method === 'kakao' || method === 'naver') {
+                const brandName = method === 'kakao' ? '카카오페이' : '네이버페이';
+                const brandColorClass = method === 'kakao' ? 'text-yellow-500' : 'text-emerald-500';
+                const brandIcon = method === 'kakao' ? 'fa-qrcode' : 'fa-barcode';
+                
+                titleEl.innerText = `🟡 ${brandName} 바코드 결제`;
+                subTitleEl.innerText = "폰 화면의 바코드나 QR을 리더기에 비춰주세요.";
+                iconBox.innerHTML = `<i class="fa-solid ${brandIcon} animate-pulse ${brandColorClass}"></i>`;
+                visualBox.innerHTML = `
+                    <p class="text-left">💡 <strong class="text-emerald-950">간편 바코드결제 배움 가이드:</strong></p>
+                    <p class="text-left mt-1">1. 휴대폰의 ${brandName} 앱을 열고 바코드 화면을 켭니다.</p>
+                    <p class="text-left">2. 기계 아래쪽에서 빨간색 불빛이 나오는 바코드 카메라 창을 찾습니다.</p>
+                    <p class="text-left">3. 불빛에서 약 10cm 정도 거리를 두고 폰 화면 바코드를 정면으로 비춰주세요.</p>
+                `;
+                actionBtn.innerText = "바코드 스캔을 완료했습니다 (완료 클릭)";
+                speak(`${brandName}를 선택하셨습니다. 스마트폰 바코드 화면을 빨간 불빛이 나오는 리더기 창에 비춰주세요.`);
+            }
+
+            document.getElementById('payment-modal').classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        async function processFinalPayment() {
+            document.getElementById('payment-modal').classList.add('hidden');
+            clearInterval(timerInterval);
+
+            const speedScore = Math.max(100, 1000 - (secondsElapsed * 10));
+            const totalPointsCalculated = speedScore + bonusPointsAccumulated;
+
+            const scoreDetailMsg = `소요 시간: ${secondsElapsed}초\n신속 포인트: ${speedScore}점\n옵션 보너스: +${bonusPointsAccumulated}점\n\n최종 포인트: ${totalPointsCalculated}점!`;
+
+            setTimeout(() => {
+                showModal('🏆', '디지털 트레이닝 수료!', `${scoreDetailMsg}\n\n등록하고 순위표에서 친구들과 순위를 겨뤄보세요!`, async (enteredNickname) => {
+                    const finalNickname = enteredNickname || "비공개 챌린저";
+                    
+                    // localStorage에 랭킹 저장
+                    const newRecord = {
+                        id: 'rec_' + Date.now(),
+                        name: finalNickname,
+                        points: totalPointsCalculated,
+                        time: `${secondsElapsed}초`,
+                        type: currentKioskType === 'cafe' ? "카페" : "햄버거",
+                        userId: currentUser.uid,
+                        createdAt: Date.now()
+                    };
+                    const existingReal = loadRankings();
+                    existingReal.push(newRecord);
+                    saveRankings(existingReal);
+                    // 메모리 랭킹 업데이트
+                    rankingsData = [...existingReal, ...dummyRankings];
+                    rankingsData.sort((a, b) => b.points - a.points);
+
+                    switchPage('ranking');
+                }, true);
+            }, 500);
+        }
+
+        function exitKiosk() {
+            clearInterval(timerInterval);
+            document.getElementById('kiosk-menu').classList.remove('hidden');
+            document.getElementById('kiosk-simulator').classList.add('hidden');
+            kioskCart = [];
+            updateCartUI();
+        }
+
+        // 전역 window 범위에 모든 비즈니스 함수 강제 정렬 바인딩
+        window.switchPage = switchPage;
+        window.toggleVoice = toggleVoice;
+        window.simulatePush = simulatePush;
+        window.hidePushBanner = hidePushBanner;
+        window.startRealKiosk = startRealKiosk;
+        window.selectCategory = selectCategory;
+        window.handleItemClick = handleItemClick;
+        window.openOptionModal = openOptionModal;
+        window.setCafeOpt = setCafeOpt;
+        window.setSmoothieSweetness = setSmoothieSweetness;
+        window.setBurgerOpt = setBurgerOpt;
+        window.toggleBurgerAdd = toggleBurgerAdd;
+        window.closeOptionModal = closeOptionModal;
+        window.addSelectedOptionsToCart = addSelectedOptionsToCart;
+        window.removeFromCart = removeFromCart;
+        window.clearCart = clearCart;
+        window.openCheckoutStep = openCheckoutStep;
+        window.closePayMethodModal = closePayMethodModal;
+        window.choosePaymentMethod = choosePaymentMethod;
+        window.closePaymentModal = closePaymentModal;
+        window.processFinalPayment = processFinalPayment;
+        window.exitKiosk = exitKiosk;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
