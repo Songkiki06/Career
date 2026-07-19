@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>에코그리드 매니저</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; margin: auto; }
+        .slider-group { margin: 20px 0; }
+        .result-box { padding: 15px; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        progress { width: 100%; height: 25px; }
+    </style>
+</head>
+<body>
+
+    <h1>에코그리드 매니저 (EcoGrid Manager)</h1>
+    <h3>K-SDG 9: 산업·혁신·사회기반시설 탐구 프로젝트</h3>
+
+    <div class="slider-group">
+        <label>현재 태양광 발전량 (kW): <span id="solarVal">150</span></label><br>
+        <input type="range" id="solarSlider" min="0" max="200" value="150" style="width:100%">
+    </div>
+
+    <div class="slider-group">
+        <label>현재 전력 수요량 (kW): <span id="demandVal">100</span></label><br>
+        <input type="range" id="demandSlider" min="0" max="200" value="100" style="width:100%">
+    </div>
+
+    <h3>[실시간 인프라 제어 결과]</h3>
+    <div id="statusBox" class="info">평형 상태: 발전량과 수요량이 일치합니다.</div>
+
+    <p>ESS 배터리 잔량: <span id="batteryPercent">50</span>%</p>
+    <progress id="batteryBar" value="50" max="100"></progress>
+
+    <script>
+        let battery = 50;
+        const solarSlider = document.getElementById('solarSlider');
+        const demandSlider = document.getElementById('demandSlider');
+        const solarVal = document.getElementById('solarVal');
+        const demandVal = document.getElementById('demandVal');
+        const statusBox = document.getElementById('statusBox');
+        const batteryBar = document.getElementById('batteryBar');
+        const batteryPercent = document.getElementById('batteryPercent');
+
+        function update() {
+            let solar = parseInt(solarSlider.value);
+            let demand = parseInt(demandSlider.value);
+            
+            solarVal.innerText = solar;
+            demandVal.innerText = demand;
+
+            if (solar > demand) {
+                if (battery < 100) battery++;
+                statusBox.className = 'result-box success';
+                statusBox.innerText = `🔋 에너지 과잉! 남는 전력 ${solar - demand}kW를 ESS에 충전 중입니다.`;
+            } else if (solar < demand) {
+                if (battery > 0) battery--;
+                statusBox.className = 'result-box warning';
+                statusBox.innerText = `⚠️ 전력 부족! 부족한 전력 ${demand - solar}kW를 ESS에서 방전 중입니다.`;
+            } else {
+                statusBox.className = 'result-box info';
+                statusBox.innerText = "평형 상태: 발전량과 수요량이 일치합니다.";
+            }
+
+            batteryBar.value = battery;
+            batteryPercent.innerText = battery;
+        }
+
+        // 슬라이더를 움직일 때마다 update 함수 실행
+        solarSlider.oninput = update;
+        demandSlider.oninput = update;
+    </script>
+</body>
+</html>
