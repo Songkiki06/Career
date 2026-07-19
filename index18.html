@@ -1,338 +1,136 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스마트 복약 매니저</title>
+    <!-- [기존 스타일 유지] -->
     <style>
-        :root {
-            --primary-color: #4A90E2;
-            --success-color: #2ECC71;
-            --alert-color: #E74C3C;
-            --bg-color: #F0F4F8;
-            --card-bg: #FFFFFF;
-        }
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            position: relative;
-        }
+        :root { --primary-color: #4A90E2; --success-color: #2ECC71; --alert-color: #E74C3C; --bg-color: #F0F4F8; --card-bg: #FFFFFF; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); position: relative; }
         h1 { text-align: center; color: #1E293B; font-size: 26px; margin-bottom: 5px; font-weight: 800; }
-        
-        /* Streak 배너 */
-        .streak-banner {
-            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
-            color: #fff;
-            padding: 18px;
-            border-radius: 16px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
-        }
-        .streak-banner.pulse-effect { animation: bounce 0.5s ease-in-out; }
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-
-        /* 입력 폼 */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
-            background: #F8FAFC;
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid #E2E8F0;
-        }
+        .streak-banner { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); color: #fff; padding: 18px; border-radius: 16px; text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3); }
+        .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; background: #F8FAFC; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; }
         .input-row { display: flex; gap: 10px; }
         .input-row input { flex: 1; }
-        .input-group input, .input-group select {
-            padding: 12px; border: 1px solid #CBD5E1; border-radius: 10px; font-size: 14px; background: #FFF;
-        }
-        .input-group button {
-            background-color: var(--primary-color); color: white; border: none; padding: 14px;
-            border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 15px;
-        }
-
-        /* 약 카드 */
+        .input-group input, .input-group select { padding: 12px; border: 1px solid #CBD5E1; border-radius: 10px; font-size: 14px; background: #FFF; }
+        .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 15px; }
         .med-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
-        .med-card {
-            border: 1px solid #E2E8F0; padding: 18px; border-radius: 16px;
-            display: flex; justify-content: space-between; align-items: center; background: #FFF;
-        }
-        .med-card.alert-active {
-            border-color: var(--alert-color); background-color: #FFF5F5;
-            animation: shake 0.5s ease-in-out infinite alternate;
-        }
-        @keyframes shake { 0% { transform: translateY(0); } 100% { transform: translateY(-4px); } }
+        .med-card { border: 1px solid #E2E8F0; padding: 18px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; background: #FFF; }
         .med-card.taken { border-color: #E2E8F0; background-color: #F8FAFC; opacity: 0.6; }
         .med-card.taken h3 { text-decoration: line-through; color: #94A3B8; }
         .time-tag { background-color: #E2E8F0; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #475569; }
-        .status-msg { font-size: 12px; color: var(--alert-color); font-weight: bold; margin-top: 6px; display: none; }
-        .med-card.alert-active .status-msg { display: block; }
-
         .btn-group { display: flex; gap: 6px; }
         .btn-action { border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-take { background-color: var(--success-color); color: white; }
-        .btn-take:disabled { background-color: #CBD5E1; color: #94A3B8; cursor: not-allowed; }
-        .btn-edit { background-color: #E2E8F0; color: #475569; }
         .btn-delete { background-color: #FFE4E6; color: var(--alert-color); }
-
-        /* 불꽃 캘린더 UI 스타일 */
-        .calendar-section {
-            background: #F8FAFC; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0;
-        }
-        .calendar-title { font-size: 16px; font-weight: bold; color: #1E293B; margin-bottom: 15px; text-align: center; }
-        .calendar-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;
-        }
-        .calendar-day-label { font-size: 12px; font-weight: bold; color: #64748B; padding-bottom: 5px; }
-        .calendar-cell {
-            background: #FFF; border: 1px solid #E2E8F0; border-radius: 8px; height: 45px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            font-size: 13px; font-weight: 500; color: #334155; position: relative;
-        }
-        .calendar-cell.today { border-color: var(--primary-color); background-color: #EFF6FF; font-weight: bold; }
-        .fire-stamp { font-size: 16px; margin-top: 2px; animation: pop 0.3s ease; }
-        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-        
-        .debug-btn { background: #64748B; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; margin-top: 15px; display: block; width: 100%; }
+        .calendar-section { background: #F8FAFC; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+        .calendar-cell { background: #FFF; border: 1px solid #E2E8F0; border-radius: 8px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; }
+        .calendar-cell.today { border-color: var(--primary-color); background-color: #EFF6FF; }
+        .fire-stamp { font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="container" id="main-container">
+<div class="container">
     <h1>💊 스마트 복약 관리</h1>
-    <p style="text-align: center; color: #64748B; font-size: 14px; margin-top: 0; margin-bottom: 20px;">
-        현재 시간: <span id="current-clock" style="font-weight: bold; color: #334155;">00:00:00</span>
-    </p>
+    <p style="text-align: center; color: #64748B; font-size: 14px;">현재 시간: <span id="current-clock" style="font-weight: bold;">00:00:00</span></p>
     
-    <div class="streak-banner" id="streak-banner">
-        🔥 연속 <span id="streak-count">0</span>일 달성! 대단해요!
-    </div>
+    <div class="streak-banner">🔥 연속 <span id="streak-count">0</span>일 달성! 대단해요!</div>
 
     <div class="input-group">
         <input type="hidden" id="med-id">
-        <input type="text" id="med-name" placeholder="예: 데파코트서방정, 아리피졸정">
+        <input type="text" id="med-name" placeholder="약 이름">
         <div class="input-row">
-            <input type="number" id="med-dosage" placeholder="복용량" min="1">
-            <select id="med-unit">
-                <option value="정">정</option>
-                <option value="g">g</option>
-            </select>
+            <input type="number" id="med-dosage" placeholder="량">
+            <select id="med-unit"><option value="정">정</option><option value="g">g</option></select>
             <input type="time" id="med-time">
         </div>
         <button id="btn-submit" onclick="submitForm()">+ 새로운 복용 일정 추가</button>
-        <button id="btn-cancel-edit" onclick="resetForm()" style="display:none; background-color:#64748B; margin-top:5px; color:white; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">수정 취소</button>
+        <button id="btn-cancel-edit" onclick="resetForm()" style="display:none; background-color:#64748B; margin-top:5px; color:white; border:none; padding:10px; border-radius:10px; cursor:pointer;">수정 취소</button>
     </div>
 
-    <div class="med-list" id="med-list">
-        
-        <div class="med-card " id="med-1" data-time="08:00">
-            <div class="med-info">
-                <h3><span class="name-text">데파코트서방정</span> <span class="time-tag">08:00</span></h3>
-                <p style="margin: 0; color: #64748B; font-size: 14px;">1회 복용량: <span class="dosage-text">1정</span></p>
-                <div class="status-msg">⚠️ 지금 복용할 시간입니다! (골든타임 전후 30분)</div>
-            </div>
-            <div class="btn-group">
-                <button class="btn-action btn-take" onclick="takeMedication('1')" >
-                    복용 확인
-                </button>
-                <button class="btn-action btn-edit" onclick="editMedication('1')">수정</button>
-                <button class="btn-action btn-delete" onclick="deleteMedication('1')">삭제</button>
-            </div>
-        </div>
-        
-        <div class="med-card " id="med-2" data-time="19:30">
-            <div class="med-info">
-                <h3><span class="name-text">아리피졸정</span> <span class="time-tag">19:30</span></h3>
-                <p style="margin: 0; color: #64748B; font-size: 14px;">1회 복용량: <span class="dosage-text">2정</span></p>
-                <div class="status-msg">⚠️ 지금 복용할 시간입니다! (골든타임 전후 30분)</div>
-            </div>
-            <div class="btn-group">
-                <button class="btn-action btn-take" onclick="takeMedication('2')" >
-                    복용 확인
-                </button>
-                <button class="btn-action btn-edit" onclick="editMedication('2')">수정</button>
-                <button class="btn-action btn-delete" onclick="deleteMedication('2')">삭제</button>
-            </div>
-        </div>
-        
-    </div>
+    <div class="med-list" id="med-list"></div>
 
     <div class="calendar-section">
-        <div class="calendar-title">🗓️ 이번 주 복약 기록 현황</div>
-        <div class="calendar-grid" id="calendar-grid">
-            <div class="calendar-day-label">일</div><div class="calendar-day-label">월</div><div class="calendar-day-label">화</div>
-            <div class="calendar-day-label">수</div><div class="calendar-day-label">목</div><div class="calendar-day-label">금</div><div class="calendar-day-label">토</div>
-            </div>
+        <div style="font-weight:bold; margin-bottom:15px; text-align:center;">🗓️ 이번 주 복약 기록 현황</div>
+        <div class="calendar-grid" id="calendar-grid"></div>
     </div>
-    
-    <button class="debug-btn" onclick="simulateNewDay()">🛠️ 개발자용 기능: 다음 날로 시뮬레이션 (약 리셋)</button>
 </div>
 
 <script>
-    // 파이썬 백엔드에서 전달받은 변수들을 JS로 매핑
-    const completedDays = [];
-    const todayStr = "2026-07-19";
+    let meds = JSON.parse(localStorage.getItem('meds')) || [];
+    let history = JSON.parse(localStorage.getItem('history')) || {};
 
-    function checkTime() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const currentTimeStr = `${hours}:${minutes}`;
-        
-        document.getElementById('current-clock').innerText = `${hours}:${minutes}:${seconds}`;
+    // 시간 표시
+    setInterval(() => {
+        document.getElementById('current-clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
 
-        document.querySelectorAll('.med-card').forEach(card => {
-            const targetTime = card.getAttribute('data-time');
-            const isTaken = card.classList.contains('taken');
-            
-            // 전후 30분 타이밍 체크를 위한 로직
-            const [tHours, tMinutes] = targetTime.split(':').map(Number);
-            const targetDateObj = new Date();
-            targetDateObj.setHours(tHours, tMinutes, 0, 0);
-            
-            const diffMs = now - targetDateObj;
-            const diffMins = Math.abs(diffMs) / 1000 / 60;
-
-            // 골든타임 이내이고 아직 안 먹었을 때 활성화
-            if (diffMins <= 30 && !isTaken) {
-                card.classList.add('alert-active');
-            } else {
-                card.classList.remove('alert-active');
-            }
+    function render() {
+        const list = document.getElementById('med-list');
+        list.innerHTML = '';
+        meds.forEach((m, i) => {
+            const card = document.createElement('div');
+            card.className = `med-card ${m.taken ? 'taken' : ''}`;
+            card.innerHTML = `<div><h3>${m.name} <span class="time-tag">${m.time}</span></h3>
+                <p style="margin:0; font-size:14px;">복용량: ${m.dosage}${m.unit}</p></div>
+                <div class="btn-group">
+                    <button class="btn-action btn-take" onclick="toggleMed(${i})">${m.taken ? '완료' : '복용 확인'}</button>
+                    <button class="btn-action" onclick="editMed(${i})" style="background:#E2E8F0;">수정</button>
+                    <button class="btn-action btn-delete" onclick="deleteMed(${i})">삭제</button>
+                </div>`;
+            list.appendChild(card);
         });
-    }
-    setInterval(checkTime, 1000);
-    checkTime();
-
-    // 이번 주 미니 캘린더 생성기
-    function drawCalendar() {
-        const grid = document.getElementById('calendar-grid');
-        const now = new Date();
-        const currentDayOfWeek = now.getDay(); // 0: 일, 1: 월...
-        
-        // 일요일 시작 기준으로 이번 주의 일요일 날짜 구하기
-        const sunday = new Date(now);
-        sunday.setDate(now.getDate() - currentDayOfWeek);
-
-        for (let i = 0; i < 7; i++) {
-            const cellDate = new Date(sunday);
-            cellDate.setDate(sunday.getDate() + i);
-            
-            const year = cellDate.getFullYear();
-            const month = String(cellDate.getMonth() + 1).padStart(2, '0');
-            const date = String(cellDate.getDate()).padStart(2, '0');
-            const dateKey = `${year}-${month}-${date}`;
-
-            const cell = document.createElement('div');
-            cell.classList.add('calendar-cell');
-            
-            if (dateKey === todayStr) {
-                cell.classList.add('today');
-            }
-            
-            cell.innerHTML = `<div>${cellDate.getDate()}</div>`;
-
-            // 모든 약 수령 완수한 날짜 목록에 포함되어 있다면 불꽃 도장쾅!
-            if (completedDays.includes(dateKey)) {
-                cell.innerHTML += `<div class="fire-stamp">🔥</div>`;
-            }
-
-            grid.appendChild(cell);
-        }
-    }
-    drawCalendar();
-
-    // 복용 확인 버튼 작동
-    function takeMedication(id) {
-        fetch(`/take/${id}`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById(`streak-count`).innerText = data.new_streak;
-                const card = document.getElementById(`med-${id}`);
-                card.classList.remove('alert-active');
-                card.classList.add('taken');
-                card.querySelector('.btn-take').innerText = '완료';
-                card.querySelector('.btn-take').disabled = true;
-                
-                if (data.streak_increased) {
-                    // 배너 연출 효과
-                    const banner = document.getElementById('streak-banner');
-                    banner.classList.add('pulse-effect');
-                    alert(`🎉 축하합니다! 오늘 계획된 복약을 모두 완수하여 연속 ${data.new_streak}일을 달성했습니다! 달력에 불꽃이 추가됩니다.`);
-                    location.reload();
-                } else if(data.all_taken) {
-                    alert('오늘의 모든 약을 복용하셨습니다!');
-                    location.reload();
-                } else {
-                    alert('성공적으로 복용되었습니다. 남은 약 일정도 마저 완료해보세요!');
-                }
-            } else if (data.reason === 'timeout') {
-                // 골든타임 오버로 실패한 경우 경고창 후 새로고침하여 streak 0 리셋 반영
-                alert(data.message);
-                location.reload();
-            }
-        });
+        updateStreak();
+        renderCalendar();
     }
 
-    // 새 일정 등록 / 수정
     function submitForm() {
         const id = document.getElementById('med-id').value;
         const name = document.getElementById('med-name').value;
-        const dosageNum = document.getElementById('med-dosage').value;
+        const dosage = document.getElementById('med-dosage').value;
         const unit = document.getElementById('med-unit').value;
         const time = document.getElementById('med-time').value;
 
-        if(!name || !dosageNum || !time) return alert('모든 칸을 입력해 주세요.');
+        if(!name || !dosage || !time) return alert('모든 칸을 입력해 주세요.');
         
-        const dosage = dosageNum + unit;
-        const url = id ? `/edit/${id}` : '/add';
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, dosage, time })
-        })
-        .then(res => res.json())
-        .then(data => { if(data.success) location.reload(); });
+        if (id === "") {
+            meds.push({ name, dosage, unit, time, taken: false });
+        } else {
+            meds[id] = { name, dosage, unit, time, taken: meds[id].taken };
+        }
+        localStorage.setItem('meds', JSON.stringify(meds));
+        resetForm();
+        render();
     }
 
-    function editMedication(id) {
-        const card = document.getElementById(`med-${id}`);
-        const name = card.querySelector('.name-text').innerText;
-        const rawDosage = card.querySelector('.dosage-text').innerText;
-        const time = card.getAttribute('data-time');
+    function toggleMed(i) {
+        meds[i].taken = !meds[i].taken;
+        const today = new Date().toISOString().split('T')[0];
+        history[today] = meds.every(m => m.taken);
+        localStorage.setItem('meds', JSON.stringify(meds));
+        localStorage.setItem('history', JSON.stringify(history));
+        render();
+    }
 
-        const dosageNum = parseFloat(rawDosage);
-        const unit = rawDosage.replace(dosageNum, '').trim() || '정';
+    function deleteMed(i) {
+        if(!confirm('정말 삭제하시겠습니까?')) return;
+        meds.splice(i, 1);
+        localStorage.setItem('meds', JSON.stringify(meds));
+        render();
+    }
 
-        document.getElementById('med-id').value = id;
-        document.getElementById('med-name').value = name;
-        document.getElementById('med-dosage').value = dosageNum;
-        document.getElementById('med-unit').value = unit;
-        document.getElementById('med-time').value = time;
-
+    function editMed(i) {
+        document.getElementById('med-id').value = i;
+        document.getElementById('med-name').value = meds[i].name;
+        document.getElementById('med-dosage').value = meds[i].dosage;
+        document.getElementById('med-unit').value = meds[i].unit;
+        document.getElementById('med-time').value = meds[i].time;
         document.getElementById('btn-submit').innerText = '✓ 일정 수정 완료';
         document.getElementById('btn-cancel-edit').style.display = 'block';
-        document.getElementById('med-name').focus();
     }
 
     function resetForm() {
@@ -344,18 +142,29 @@
         document.getElementById('btn-cancel-edit').style.display = 'none';
     }
 
-    function deleteMedication(id) {
-        if(!confirm('정말 삭제하시겠습니까?')) return;
-        fetch(`/delete/${id}`, { method: 'POST' }).then(() => location.reload());
+    function updateStreak() {
+        let count = 0;
+        let d = new Date();
+        while (history[d.toISOString().split('T')[0]]) {
+            count++;
+            d.setDate(d.getDate() - 1);
+        }
+        document.getElementById('streak-count').innerText = count;
     }
 
-    // 테스트를 편하게 해주는 기능 (다음 날이 되어 약 체크 상태가 리셋되는 것 시뮬레이션)
-    function simulateNewDay() {
-        fetch('/reset_day', { method: 'POST' }).then(() => {
-            alert('일정이 리셋되었습니다. 다음 날 테스트를 이어서 진행해 보세요!');
-            location.reload();
-        });
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        const today = new Date();
+        for(let i=0; i<7; i++) {
+            let d = new Date(); d.setDate(today.getDate() - today.getDay() + i);
+            let ds = d.toISOString().split('T')[0];
+            grid.innerHTML += `<div class="calendar-cell ${ds === today.toISOString().split('T')[0] ? 'today':''}">
+                ${d.getDate()}<br>${history[ds] ? '<span class="fire-stamp">🔥</span>' : ''}</div>`;
+        }
     }
+
+    render();
 </script>
 </body>
 </html>
