@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우울증 선별 검사</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f6f7; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        .question { font-size: 1.1rem; margin-bottom: 20px; font-weight: bold; color: #444; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        button { padding: 12px; font-size: 1rem; border: 1px solid #ddd; border-radius: 8px; background-color: white; cursor: pointer; transition: all 0.2s; }
+        button:hover { background-color: #eef2ff; border-color: #4f46e5; color: #4f46e5; }
+        .hidden { display: none; }
+        textarea { width: 90%; height: 80px; margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none; }
+        .submit-btn { margin-top: 15px; background-color: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .submit-btn:hover { background-color: #4338ca; }
+        .result-box { line-height: 1.6; text-align: left; background: #f8fafc; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>우울증 선별 검사</h2>
+    
+    <div id="survey-section">
+        <div class="question" id="question-text">질문 로딩 중...</div>
+        <div class="btn-group">
+            <button onclick="nextQuestion(0)">전혀 없음 (0점)</button>
+            <button onclick="nextQuestion(1)">며칠 동안 (1점)</button>
+            <button onclick="nextQuestion(2)">일주일 이상 (2점)</button>
+            <button onclick="nextQuestion(3)">거의 매일 (3점)</button>
+        </div>
+    </div>
+
+    <div id="result-section" class="hidden">
+        <div class="result-box">
+            <p><strong>결과 점수:</strong> <span id="score-text">0</span>점</p>
+            <p id="guide-text"></p>
+        </div>
+        
+        <div id="talk-box" class="hidden">
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            <p style="text-align: left; color: #4f46e5;"><strong>[AI]</strong> 마음이 많이 무거우신 것 같아요. 가장 힘든 점이 무엇인지 말씀해주실 수 있나요?</p>
+            <textarea id="user-input" placeholder="여기에 답변을 입력해보세요..."></textarea>
+            <button class="submit-btn" onclick="submitTalk()">답변 전송</button>
+        </div>
+        
+        <div id="safe-box" class="hidden" style="margin-top: 20px; color: #10b981; font-weight: bold;">
+            [AI] 다행히 마음 건강이 비교적 안정적인 상태네요. 오늘 하루도 편안하게 보내시길 바랍니다.
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        "1. 흥미나 즐거움을 느끼지 못함",
+        "2. 기분이 가라앉거나 우울함",
+        "3. 피곤하고 활력이 없음"
+    ];
+    let currentIdx = 0;
+    let totalScore = 0;
+
+    function loadQuestion() {
+        if (currentIdx < questions.length) {
+            document.getElementById("question-text").innerText = questions[currentIdx];
+        } else {
+            showResult();
+        }
+    }
+
+    function nextQuestion(score) {
+        totalScore += score;
+        currentIdx++;
+        loadQuestion();
+    }
+
+    function showResult() {
+        document.getElementById("survey-section").classList.add("hidden");
+        document.getElementById("result-section").classList.remove("hidden");
+        document.getElementById("score-text").innerText = totalScore;
+        document.getElementById("guide-text").innerText = "점수가 높거나 마음이 힘들 때는 주변의 신뢰할 수 있는 어른이나 전문 기관의 도움을 받는 것이 좋습니다.";
+        
+        if (totalScore >= 3) { // 예시 점수 기준
+            document.getElementById("talk-box").classList.remove("hidden");
+        } else {
+            document.getElementById("safe-box").classList.remove("hidden");
+        }
+    }
+
+    function submitTalk() {
+        const userInput = document.getElementById("user-input").value.trim();
+        if (userInput === "") {
+            alert("답변을 입력해주세요!");
+            return;
+        }
+        alert("[AI]\n그랬군요. 이야기해주셔서 감사해요. 속상하고 지치는 마음은 당연한 감정이에요. 하지만 혼자 너무 애쓰지 마세요. 언제든 털어놓고 도움을 요청해도 괜찮아요.");
+        location.reload();
+    }
+
+    loadQuestion();
+</script>
+</body>
+</html>
